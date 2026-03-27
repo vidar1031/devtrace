@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DevTrace Privacy Policy</title>
+    <meta name="description" content="Privacy policy for DevTrace, a developer network inspection and API/resource debugging Chrome extension.">
+    <style>
+        :root {
+            --bg: #f4f7fb;
+            --panel: #ffffff;
+            --text: #1f2937;
+            --muted: #5f6b7a;
+            --accent: #123b63;
+            --accent-soft: #e1eefc;
+            --border: #d9e2ec;
+            --success-bg: #f0fdf4;
+            --success-border: #cae9d6;
+            --success-text: #166534;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            font-family: "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+            color: var(--text);
+            background:
+                radial-gradient(circle at top left, rgba(18, 59, 99, 0.12), transparent 24%),
+                linear-gradient(180deg, #f8fbff 0%, var(--bg) 100%);
+        }
+
+        .container {
+            width: min(920px, calc(100% - 32px));
+            margin: 0 auto;
+            padding: 28px 0 40px;
+        }
+
+        .nav {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 18px;
+        }
+
+        .nav a {
+            text-decoration: none;
+            color: var(--accent);
+            font-weight: 700;
+            background: rgba(18, 59, 99, 0.08);
+            padding: 10px 14px;
+            border-radius: 12px;
+        }
+
+        .panel {
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 22px;
+            padding: 28px;
+            box-shadow: 0 14px 28px rgba(15, 23, 42, 0.06);
+        }
+
+        h1 {
+            margin: 0 0 12px;
+            font-size: clamp(30px, 4vw, 42px);
+            line-height: 1.12;
+        }
+
+        h2 {
+            margin-top: 26px;
+            margin-bottom: 10px;
+            font-size: 22px;
+        }
+
+        p, li {
+            color: var(--muted);
+            line-height: 1.8;
+        }
+
+        ul {
+            padding-left: 20px;
+        }
+
+        .meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+
+        .meta span {
+            background: var(--accent-soft);
+            color: var(--accent);
+            font-size: 13px;
+            font-weight: 700;
+            border-radius: 999px;
+            padding: 7px 12px;
+        }
+
+        .callout {
+            background: var(--success-bg);
+            border: 1px solid var(--success-border);
+            color: var(--success-text);
+            border-radius: 16px;
+            padding: 16px 18px;
+            line-height: 1.7;
+            margin: 18px 0;
+        }
+
+        .footer-note {
+            margin-top: 26px;
+            padding-top: 18px;
+            border-top: 1px solid var(--border);
+            color: var(--muted);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <nav class="nav">
+            <a href="index.html">Home</a>
+            <a href="support.html">Support</a>
+            <a href="https://github.com/gamelibs/devtrace-extension">GitHub</a>
+        </nav>
+
+        <article class="panel">
+            <div class="meta">
+                <span>DevTrace v3.0.5</span>
+                <span>Local-Only Processing</span>
+                <span>Developer Tool</span>
+            </div>
+
+            <h1>Privacy Policy</h1>
+            <p>
+                DevTrace is a developer network inspection and API/resource debugging extension.
+                It is not positioned as a general-purpose data collection service.
+            </p>
+
+            <div class="callout">
+                Summary: DevTrace processes captured request data locally inside the browser environment.
+                It does not include built-in analytics, telemetry, or an external upload pipeline.
+            </div>
+
+            <h2>1. What Data DevTrace Uses</h2>
+            <p>DevTrace may access the following information during normal operation:</p>
+            <ul>
+                <li>the URL entered by the user when starting capture</li>
+                <li>network request metadata captured during the active session</li>
+                <li>extension settings such as capture mode, blocked domains, and allowed domains</li>
+                <li>local download status used to avoid re-downloading previously completed resources</li>
+            </ul>
+            <p>
+                Depending on the page being inspected, captured request data may include request URLs,
+                methods, response status codes, resource types, timestamps, and response size metadata.
+            </p>
+
+            <h2>2. Purpose of Use</h2>
+            <p>DevTrace uses this data only to provide user-visible developer tooling features, including:</p>
+            <ul>
+                <li>inspecting page requests in real time</li>
+                <li>debugging API requests and responses</li>
+                <li>analyzing resource loading behavior</li>
+                <li>exporting user-selected resources for development and troubleshooting workflows</li>
+            </ul>
+
+            <h2>3. Data Storage</h2>
+            <p>
+                DevTrace stores its working state in <code>chrome.storage.local</code>, including capture sessions,
+                current capture state, extension settings, persisted download completion state by domain,
+                and the last entered URL.
+            </p>
+            <p>This data remains on the local browser profile unless the user clears it.</p>
+
+            <h2>4. What DevTrace Does Not Do</h2>
+            <ul>
+                <li>does not send captured data to a remote server</li>
+                <li>does not embed third-party analytics or telemetry</li>
+                <li>does not create user accounts</li>
+                <li>does not share captured request data with the developer by default</li>
+                <li>does not sell captured data</li>
+            </ul>
+
+            <h2>5. Permissions Explanation</h2>
+            <ul>
+                <li><strong>tabs</strong> and <strong>activeTab</strong>: navigate and inspect the active browser tab during an explicit capture workflow</li>
+                <li><strong>webRequest</strong> and <strong>webNavigation</strong>: observe request and navigation activity for the user-selected target scope</li>
+                <li><strong>storage</strong>: persist local settings, session state, and download markers</li>
+                <li><strong>downloads</strong>: export JSON data and selected resources to the local device</li>
+                <li><strong>optional host permissions</strong>: requested at runtime for the chosen capture scope instead of granted globally up front</li>
+            </ul>
+
+            <h2>6. Resource Export</h2>
+            <p>
+                When the user exports resources, files are written either directly into a user-selected folder when supported by the browser,
+                or through the browser Downloads API as a fallback. Exported files are written only because of explicit user action.
+            </p>
+
+            <h2>7. User Control</h2>
+            <ul>
+                <li>stop capture at any time</li>
+                <li>clear captured request data</li>
+                <li>reset the current session</li>
+                <li>choose which resources to export</li>
+                <li>remove the extension to stop future data handling</li>
+            </ul>
+
+            <h2>8. Contact</h2>
+            <p>
+                If you have questions about this privacy policy or DevTrace's data practices, contact:
+                <strong>vidar1031@gmail.com</strong>
+            </p>
+
+            <div class="footer-note">
+                This policy should remain aligned with the actual extension behavior and Chrome Web Store disclosures.
+            </div>
+        </article>
+    </div>
+</body>
+</html>

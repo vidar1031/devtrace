@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DevTrace Support & Help</title>
+    <meta name="description" content="Support, usage guidance, troubleshooting, and optional PayPal support information for DevTrace v3.0.5.">
+    <style>
+        :root {
+            --bg: #f4f7fb;
+            --panel: #ffffff;
+            --text: #1f2937;
+            --muted: #5f6b7a;
+            --accent: #123b63;
+            --accent-soft: #e1eefc;
+            --border: #d9e2ec;
+            --donate: #0f9d58;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            font-family: "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+            color: var(--text);
+            background:
+                radial-gradient(circle at top left, rgba(18, 59, 99, 0.12), transparent 24%),
+                linear-gradient(180deg, #f8fbff 0%, var(--bg) 100%);
+        }
+
+        .container {
+            width: min(1080px, calc(100% - 32px));
+            margin: 0 auto;
+            padding: 28px 0 40px;
+        }
+
+        .nav {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 18px;
+        }
+
+        .nav a {
+            text-decoration: none;
+            color: var(--accent);
+            font-weight: 700;
+            background: rgba(18, 59, 99, 0.08);
+            padding: 10px 14px;
+            border-radius: 12px;
+        }
+
+        .hero,
+        .panel {
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 22px;
+            box-shadow: 0 14px 28px rgba(15, 23, 42, 0.06);
+        }
+
+        .hero {
+            padding: 28px;
+            margin-bottom: 18px;
+            background: linear-gradient(135deg, #17324d 0%, #284968 52%, #376488 100%);
+            color: #fff;
+            border: none;
+        }
+
+        .hero p {
+            color: rgba(255, 255, 255, 0.84);
+            line-height: 1.8;
+        }
+
+        h1 {
+            margin: 0 0 10px;
+            font-size: clamp(30px, 4vw, 44px);
+            line-height: 1.12;
+        }
+
+        h2 {
+            margin: 0 0 12px;
+            font-size: 22px;
+        }
+
+        .version {
+            display: inline-flex;
+            border-radius: 999px;
+            padding: 6px 12px;
+            background: rgba(255, 255, 255, 0.14);
+            border: 1px solid rgba(255, 255, 255, 0.22);
+            font-size: 13px;
+            font-weight: 700;
+            margin-bottom: 12px;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 18px;
+        }
+
+        .panel {
+            padding: 24px;
+        }
+
+        p, li {
+            color: var(--muted);
+            line-height: 1.75;
+        }
+
+        ul, ol {
+            padding-left: 20px;
+            margin: 0;
+        }
+
+        .faq {
+            display: grid;
+            gap: 14px;
+        }
+
+        .faq-item {
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 16px 18px;
+            background: #fbfdff;
+        }
+
+        .faq-item strong {
+            display: block;
+            color: var(--text);
+            margin-bottom: 6px;
+        }
+
+        .callout {
+            background: #eef6ff;
+            border: 1px solid #d3e5f7;
+            border-radius: 16px;
+            padding: 16px 18px;
+            color: #24537b;
+            line-height: 1.7;
+        }
+
+        .support-box {
+            display: grid;
+            grid-template-columns: 180px 1fr;
+            gap: 22px;
+            align-items: start;
+        }
+
+        .qr-card {
+            background: #fff;
+            border: 1px solid var(--border);
+            border-radius: 18px;
+            padding: 14px;
+            text-align: center;
+        }
+
+        .qr-card img {
+            width: 100%;
+            max-width: 160px;
+            height: auto;
+            border-radius: 14px;
+        }
+
+        .donate-button {
+            display: inline-block;
+            margin-top: 14px;
+            text-decoration: none;
+            background: linear-gradient(135deg, #0f9d58 0%, #15803d 100%);
+            color: #fff;
+            font-weight: 800;
+            border-radius: 12px;
+            padding: 12px 16px;
+        }
+
+        .muted {
+            font-size: 13px;
+            color: var(--muted);
+            margin-top: 10px;
+        }
+
+        @media (max-width: 780px) {
+            .support-box {
+                grid-template-columns: 1fr;
+            }
+
+            .container {
+                width: min(1080px, calc(100% - 20px));
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <nav class="nav">
+            <a href="index.html">Home</a>
+            <a href="privacy.html">Privacy</a>
+            <a href="https://github.com/gamelibs/devtrace-extension">GitHub</a>
+        </nav>
+
+        <section class="hero">
+            <div class="version">DevTrace v3.0.5</div>
+            <h1>Support, usage guidance, and optional project support.</h1>
+            <p>
+                This page is for developer-facing help. It explains how DevTrace is intended to be used,
+                what common issues look like, and how to contact support or optionally support continued maintenance.
+            </p>
+        </section>
+
+        <section class="grid" style="margin-bottom: 18px;">
+            <article class="panel">
+                <h2>Quick Start</h2>
+                <ol>
+                    <li>Open the extension popup and enter the target URL you want to inspect.</li>
+                    <li>Click <strong>Start</strong>. DevTrace resets the active session and requests runtime host permission for the selected scope.</li>
+                    <li>The current tab reloads to the target page so new requests can be captured.</li>
+                    <li>Use filters for domain, status, and type while inspecting live results.</li>
+                    <li>Export JSON or selected resources when needed for debugging and troubleshooting.</li>
+                </ol>
+            </article>
+
+            <article class="panel">
+                <h2>What DevTrace Is For</h2>
+                <div class="callout">
+                    DevTrace should be understood as a developer network inspection, API debugging, and resource analysis tool. It is not intended to be presented as a generic data collection product.
+                </div>
+            </article>
+        </section>
+
+        <section class="panel" style="margin-bottom: 18px;">
+            <h2>Frequently Asked Questions</h2>
+            <div class="faq">
+                <div class="faq-item">
+                    <strong>Why does the extension ask for permissions?</strong>
+                    Host access is requested at runtime for the site you explicitly choose to inspect. This keeps the permission posture narrower than always-on site access.
+                </div>
+                <div class="faq-item">
+                    <strong>Does DevTrace send captured data anywhere?</strong>
+                    No. Captured request state and download markers are processed locally and stored in the browser profile. There is no built-in analytics or upload pipeline.
+                </div>
+                <div class="faq-item">
+                    <strong>Why are some requests missing?</strong>
+                    Requests that completed before capture started cannot be reconstructed later. You should start capture before reproducing the behavior you want to inspect.
+                </div>
+                <div class="faq-item">
+                    <strong>Why do some downloads fall back to the browser download flow?</strong>
+                    Some pages or resources cannot be written directly into the selected directory because of browser restrictions, CORS behavior, or origin policy constraints.
+                </div>
+                <div class="faq-item">
+                    <strong>Can I use it on localhost or internal test environments?</strong>
+                    Yes, as long as the target URL is accessible in Chrome and the runtime permission request is granted for that scope.
+                </div>
+            </div>
+        </section>
+
+        <section class="grid" style="margin-bottom: 18px;">
+            <article class="panel">
+                <h2>Troubleshooting</h2>
+                <ul>
+                    <li>If capture appears empty, verify that you started the session before reproducing the request flow.</li>
+                    <li>If you denied permission once, run the capture again and grant the requested host access.</li>
+                    <li>If resources fail to export, try a narrower selection or rely on the browser download fallback.</li>
+                    <li>If the popup feels too constrained, switch to detached window mode in settings.</li>
+                </ul>
+            </article>
+
+            <article class="panel">
+                <h2>Contact</h2>
+                <ul>
+                    <li><strong>Email:</strong> <a href="mailto:vidar1031@gmail.com">vidar1031@gmail.com</a></li>
+                    <li><strong>GitHub Issues:</strong> <a href="https://github.com/gamelibs/devtrace-extension/issues">Report bugs or request features</a></li>
+                    <li><strong>Suggested issue details:</strong> Chrome version, extension version, reproduction steps, and any visible error messages</li>
+                </ul>
+            </article>
+        </section>
+
+        <section class="panel">
+            <h2>Optional Support / Donation</h2>
+            <div class="support-box">
+                <div class="qr-card">
+                    <img src="https___www.paypal.me_Vidar1031.png" alt="PayPal QR Code for DevTrace support">
+                    <div class="muted">PayPal QR</div>
+                </div>
+                <div>
+                    <p>
+                        If DevTrace is useful to your workflow, you can optionally support ongoing maintenance through PayPal.
+                        Any support is fully voluntary, carries no obligation, and does not unlock or gate the extension's core functionality.
+                    </p>
+                    <a class="donate-button" href="https://paypal.me/Vidar1031">Support via PayPal</a>
+                    <div class="muted">
+                        PayPal.Me: https://paypal.me/Vidar1031<br>
+                        Support email: vidar1031@gmail.com<br>
+                        Support plugin development only. No donation is required to use DevTrace.
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+</body>
+</html>

@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DevTrace Help</title>
+    <style>
+        :root {
+            --bg: #f4f7fb;
+            --panel: #ffffff;
+            --text: #1f2937;
+            --muted: #5f6b7a;
+            --accent: #0f4c81;
+            --accent-soft: #dbeafe;
+            --success: #0f9d58;
+            --border: #d9e2ec;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+            color: var(--text);
+            background:
+                radial-gradient(circle at top left, rgba(15, 76, 129, 0.14), transparent 24%),
+                linear-gradient(180deg, #f8fbff 0%, var(--bg) 100%);
+        }
+
+        .shell {
+            max-width: 1080px;
+            margin: 0 auto;
+            padding: 40px 20px 56px;
+        }
+
+        .hero {
+            background: linear-gradient(135deg, #17324d 0%, #294b6b 52%, #3b688f 100%);
+            color: #fff;
+            border-radius: 22px;
+            padding: 32px;
+            box-shadow: 0 18px 40px rgba(23, 50, 77, 0.18);
+        }
+
+        .hero-top {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            gap: 12px;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .version-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 6px 12px;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.14);
+            border: 1px solid rgba(255, 255, 255, 0.22);
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        h1 {
+            margin: 0 0 10px;
+            font-size: 34px;
+            line-height: 1.15;
+        }
+
+        .hero p {
+            margin: 0;
+            max-width: 760px;
+            color: rgba(255, 255, 255, 0.86);
+            line-height: 1.65;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 18px;
+            margin-top: 24px;
+        }
+
+        .card {
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 18px;
+            padding: 22px;
+            box-shadow: 0 10px 24px rgba(15, 23, 42, 0.06);
+        }
+
+        .card h2 {
+            margin: 0 0 12px;
+            font-size: 18px;
+        }
+
+        .card p,
+        .card li {
+            color: var(--muted);
+            line-height: 1.65;
+        }
+
+        .card ul,
+        .card ol {
+            margin: 0;
+            padding-left: 20px;
+        }
+
+        .wide {
+            margin-top: 18px;
+        }
+
+        .wide .card + .card {
+            margin-top: 18px;
+        }
+
+        .step-list {
+            counter-reset: step;
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .step-list li {
+            position: relative;
+            padding-left: 48px;
+            margin-bottom: 18px;
+            min-height: 34px;
+        }
+
+        .step-list li::before {
+            counter-increment: step;
+            content: counter(step);
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: var(--accent-soft);
+            color: var(--accent);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+        }
+
+        .tips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 12px;
+        }
+
+        .tip {
+            background: #eef6ff;
+            color: #24537b;
+            border: 1px solid #d3e6f8;
+            border-radius: 999px;
+            padding: 8px 12px;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .footer-card {
+            margin-top: 24px;
+            background: linear-gradient(180deg, #fff 0%, #f7fbff 100%);
+        }
+
+        .support-links,
+        .donation-links {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-top: 16px;
+        }
+
+        .help-link-button,
+        .donation-button {
+            border: none;
+            border-radius: 12px;
+            padding: 12px 16px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+        }
+
+        .help-link-button {
+            color: #0d3a62;
+            background: #e3f0ff;
+        }
+
+        .donation-button {
+            color: #fff;
+            background: linear-gradient(135deg, #0f9d58 0%, #15803d 100%);
+            box-shadow: 0 10px 18px rgba(21, 128, 61, 0.18);
+        }
+
+        .help-link-button:hover,
+        .donation-button:hover {
+            transform: translateY(-1px);
+        }
+
+        .fine-print {
+            margin-top: 14px;
+            color: var(--muted);
+            font-size: 13px;
+        }
+
+        .notice {
+            padding: 14px 16px;
+            border-radius: 14px;
+            background: #f0fdf4;
+            border: 1px solid #ccebd7;
+            color: #166534;
+            line-height: 1.6;
+        }
+
+        @media (max-width: 640px) {
+            .shell {
+                padding: 24px 14px 36px;
+            }
+
+            .hero {
+                padding: 24px 20px;
+                border-radius: 18px;
+            }
+
+            h1 {
+                font-size: 28px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="shell">
+        <section class="hero">
+            <div class="hero-top">
+                <div>
+                    <h1>DevTrace Help Center</h1>
+                    <p>Usage guidance for a developer-focused network inspection tool. This page explains capture flow, API and asset debugging behavior, export rules, session reset logic, and what to expect in popup or detached window mode.</p>
+                </div>
+                <div class="version-badge" data-app-version>v3.0.5</div>
+            </div>
+            <div class="tips">
+                <div class="tip">Inspect live requests</div>
+                <div class="tip">Debug APIs and assets</div>
+                <div class="tip">Persist download state</div>
+                <div class="tip">Use popup or detached window</div>
+            </div>
+        </section>
+
+        <section class="grid">
+            <article class="card">
+                <h2>Quick Start</h2>
+                <ol class="step-list">
+                    <li>Open the extension popup and enter a target URL.</li>
+                    <li>Click <strong>Start</strong>. DevTrace resets the active session first, then begins capture.</li>
+                    <li>The current browser tab reloads to the target page so new requests can be observed.</li>
+                    <li>Watch requests arrive in real time, then filter, inspect, or export what you need for debugging.</li>
+                </ol>
+            </article>
+
+            <article class="card">
+                <h2>Capture Modes</h2>
+                <ul>
+                    <li><strong>Main Domain Only</strong>: only the exact target host is tracked.</li>
+                    <li><strong>Include Subdomains</strong>: captures the target host and its subdomains.</li>
+                    <li><strong>All Domains (+ iframes)</strong>: keeps the session broad for embedded resources.</li>
+                    <li><strong>Whitelist Mode</strong>: only listed hosts are accepted.</li>
+                </ul>
+            </article>
+
+            <article class="card">
+                <h2>Export Behavior</h2>
+                <ul>
+                    <li><strong>Export JSON</strong> saves the selected downloadable resource URLs as a JSON array.</li>
+                    <li><strong>Export Resources</strong> opens a folder picker first, then writes files into a domain/path structure.</li>
+                    <li>Already completed downloads stay marked as downloaded and are skipped on later export runs.</li>
+                    <li>If direct folder writing is blocked, DevTrace falls back to the browser download pipeline.</li>
+                </ul>
+            </article>
+        </section>
+
+        <section class="wide">
+            <article class="card">
+                <h2>Important Notes</h2>
+                <div class="notice">
+                    DevTrace is designed as a developer network inspection tool. It captures requests that happen after capture begins and cannot retroactively reconstruct resources that finished loading before the listener was active.
+                </div>
+                <ul style="margin-top: 14px;">
+                    <li>Clicking <strong>Start</strong> automatically performs a stop and data reset for the active session first.</li>
+                    <li><strong>Clear All Data</strong> removes the current captured list and related persisted download markers for the active domain.</li>
+                    <li><strong>Reset Session</strong> clears the active domain session so you can begin a fresh cycle.</li>
+                    <li>Completed download status remains visible after popup reopen or page refresh.</li>
+                </ul>
+            </article>
+
+            <article class="card">
+                <h2>Permissions and Privacy</h2>
+                <ul>
+                    <li>The extension requests host access at runtime instead of hardcoding broad site access up front.</li>
+                    <li>Captured request state and download markers are stored locally in the browser profile.</li>
+                    <li>Exported resources are only written after explicit user action.</li>
+                    <li>Product positioning should remain developer-facing: network inspection, API debugging, and resource analysis.</li>
+                </ul>
+            </article>
+
+            <article class="card footer-card">
+                <h2>Support This Project</h2>
+                <p>If DevTrace helps your workflow, you can optionally support ongoing maintenance here. Any support is fully voluntary, carries no obligation, and never affects access to core functionality.</p>
+                <div id="supportLinks" class="support-links"></div>
+                <div id="donationLinks" class="donation-links"></div>
+                <div id="donationHint" class="fine-print">Support is fully voluntary. You have no obligation to donate.</div>
+                <div class="fine-print">
+                    Recommended release posture: keep donations optional, clearly labeled, and user-initiated. Donations support plugin development only and never gate the extension's core functionality.
+                </div>
+                <div class="fine-print">
+                    Support contact: <strong>vidar1031@gmail.com</strong>
+                </div>
+            </article>
+        </section>
+    </div>
+
+    <script src="help.js"></script>
+</body>
+</html>
