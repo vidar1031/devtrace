@@ -243,7 +243,7 @@
                     <h1>DevTrace Help Center</h1>
                     <p>Usage guidance for a developer-focused network inspection tool. This page explains capture flow, API and asset debugging behavior, export rules, session reset logic, and what to expect in popup or detached window mode.</p>
                 </div>
-                <div class="version-badge" data-app-version>v3.0.5</div>
+                <div class="version-badge" data-app-version>v0.0.0</div>
             </div>
             <div class="tips">
                 <div class="tip">Inspect live requests</div>
@@ -294,7 +294,7 @@
                 <ul style="margin-top: 14px;">
                     <li>Clicking <strong>Start</strong> automatically performs a stop and data reset for the active session first.</li>
                     <li><strong>Clear All Data</strong> removes the current captured list and related persisted download markers for the active domain.</li>
-                    <li><strong>Reset Session</strong> clears the active domain session so you can begin a fresh cycle.</li>
+                    <li><strong>Reset Session</strong> stops capture, clears the active domain session, removes the saved URL, and returns the extension to a fresh stopped state.</li>
                     <li>Completed download status remains visible after popup reopen or page refresh.</li>
                 </ul>
             </article>
@@ -307,6 +307,9 @@
                     <li>Exported resources are only written after explicit user action.</li>
                     <li>Product positioning should remain developer-facing: network inspection, API debugging, and resource analysis.</li>
                 </ul>
+                <div class="notice" style="margin-top: 14px;">
+                    Limited Use disclosure: browser activity data is used only for DevTrace's user-facing developer inspection, API debugging, and resource analysis features.
+                </div>
             </article>
 
             <article class="card footer-card">

@@ -1,4 +1,4 @@
-// DevTrace background service worker v3.0.5
+// DevTrace background service worker v0.0.0
 const DEVTRACE_DEBUG = false;
 const debugLog = (...args) => {
     if (DEVTRACE_DEBUG) {
@@ -115,6 +115,36 @@ let captureState = {
 // Debounce write timer
 let persistTimer = null;
 
+function resetCaptureState() {
+    captureState.isCapturing = false;
+    captureState.capturedRequests = [];
+    captureState.sessions = {};
+    captureState.targetDomain = null;
+    captureState.requestCounter = 0;
+    captureState.settings = {
+        maxRequests: 1000,
+        saveDetails: false,
+        blockAds: true,
+        blockStatic: false,
+        defaultView: 'popup',
+        captureMode: 'all_domains',
+        allowedDomains: [],
+        blockedDomains: [...DEFAULT_BLOCKED_DOMAINS]
+    };
+}
+
+async function clearInstallState() {
+    return new Promise((resolve) => {
+        chrome.storage.local.remove([
+            'captureSessions',
+            'captureGlobal',
+            'captureSettings',
+            'lastUrl',
+            'downloadStatusByDomain'
+        ], () => resolve());
+    });
+}
+
 async function loadPersistedState() {
     return new Promise(resolve => {
         chrome.storage.local.get(['captureSessions','captureGlobal','captureSettings'], (res) => {
@@ -175,21 +205,28 @@ function persistNow() {
     }
 }
 
-// 窗口管理
+// Window management
 let captureWindow = null;
 
-// 广告和追踪域名黑名单
+// Ad and tracking domain blacklist
 const AD_DOMAINS = [
     'doubleclick.net', 'googlesyndication.com', 'googletagmanager.com',
     'google-analytics.com', 'googleadservices.com', 'facebook.com',
     'amazon-adsystem.com', 'adsystem.amazon.com', 'scorecardresearch.com'
 ];
 
-// 静态资源类型
+// Static resource types
 const STATIC_TYPES = ['image', 'stylesheet', 'font', 'media'];
 
-// 初始化存储设置
-chrome.runtime.onInstalled.addListener(() => {
+// Initialize persisted settings
+chrome.runtime.onInstalled.addListener(async (details) => {
+    if (details.reason === 'install') {
+        resetCaptureState();
+        await clearInstallState();
+        persistNow();
+        return;
+    }
+
     loadSettings();
 });
 
@@ -223,7 +260,7 @@ loadPersistedState().then(() => {
     pruneBlockedFromCurrentSession();
 });
 
-// 消息处理器
+// Message handler
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     try {
         switch (request.message) {
@@ -272,7 +309,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                 handleMinimizeWindow(sendResponse);
                 break;
             case 'open_window':
-                handleOpenWindow(sendResponse);
+                handleOpenWindow(sendResponse, request.url);
                 break;
             default:
                 sendResponse({ error: 'Unknown message type' });
@@ -281,10 +318,10 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         console.error('Background script error:', error);
         sendResponse({ error: error.message });
     }
-    return true; // 保持消息通道开放
+    return true; // Keep the message channel open
 });
 
-// 开始捕获请求
+// Start request capture
 async function handleStartCapture(request, sendResponse) {
     try {
         if (!request.url || !request.url.trim()) {
@@ -298,7 +335,7 @@ async function handleStartCapture(request, sendResponse) {
             throw new Error('Invalid URL format. Please check the URL and try again.');
         }
 
-        // 根据捕获模式决定监听的URL模式
+        // Build the listener URL patterns based on the capture mode
         const captureMode = captureState.settings.captureMode || 'all_domains';
         let urls;
         
@@ -311,13 +348,13 @@ async function handleStartCapture(request, sendResponse) {
                 break;
             case 'all_domains':
             case 'whitelist':
-                urls = ["<all_urls>"]; // 监听所有URL，在shouldCaptureRequest中进行过滤
+                urls = ["<all_urls>"]; // Listen broadly and filter in shouldCaptureRequest
                 break;
             default:
                 urls = [`${targetUrl.protocol}//${targetUrl.host}/*`];
         }
 
-        // 请求权限
+        // Request runtime host permissions
         const granted = await chrome.permissions.request({
             origins: urls
         });
@@ -332,7 +369,7 @@ async function handleStartCapture(request, sendResponse) {
         captureState.isCapturing = true;
         captureState.targetDomain = newDomain;
 
-        // 每次点击 Start 都从该域名的全新会话开始
+        // Each Start action begins with a fresh session for the target domain
         captureState.sessions[newDomain] = {
             requests: [],
             urlSet: new Set(),
@@ -351,21 +388,21 @@ async function handleStartCapture(request, sendResponse) {
         schedulePersist();
         notifyPopupUpdate();
 
-        // 添加请求监听器 - 根据模式监听不同范围的请求
+        // Add request listeners for the selected scope
         chrome.webRequest.onBeforeRequest.addListener(
             handleWebRequest,
             { urls: urls },
             ["requestBody"]
         );
 
-        // 添加响应监听器以获取状态码和响应头
+        // Add response listeners to capture status codes and response headers
         chrome.webRequest.onCompleted.addListener(
             handleWebResponse,
             { urls: urls },
             ["responseHeaders"]
         );
 
-        // 更新图标
+        // Update the action icon
         chrome.action.setIcon({ path: "icon48.png" });
 
         sendResponse({ 
@@ -380,16 +417,16 @@ async function handleStartCapture(request, sendResponse) {
     }
 }
 
-// 停止捕获请求
+// Stop request capture
 function handleStopCapture(sendResponse) {
     try {
         captureState.isCapturing = false;
         
-        // 移除监听器
+        // Remove listeners
         chrome.webRequest.onBeforeRequest.removeListener(handleWebRequest);
         chrome.webRequest.onCompleted.removeListener(handleWebResponse);
         
-        // 恢复默认图标
+        // Restore the default icon
         chrome.action.setIcon({ path: "default_icon48.png" });
         
         schedulePersist();
@@ -404,7 +441,7 @@ function handleStopCapture(sendResponse) {
     }
 }
 
-// 清空请求数据
+// Clear captured request data
 function handleClearRequests(sendResponse) {
     if (captureState.targetDomain && captureState.sessions[captureState.targetDomain]) {
         captureState.sessions[captureState.targetDomain].requests = [];
@@ -423,6 +460,12 @@ function handleResetSession(sendResponse) {
         sendResponse({ success: false, error: 'No active domain' });
         return;
     }
+
+    captureState.isCapturing = false;
+    chrome.webRequest.onBeforeRequest.removeListener(handleWebRequest);
+    chrome.webRequest.onCompleted.removeListener(handleWebResponse);
+    chrome.action.setIcon({ path: "default_icon48.png" });
+
     if (!captureState.sessions[captureState.targetDomain]) {
         captureState.sessions[captureState.targetDomain] = { requests: [], urlSet: new Set(), requestCounter:0, lastUpdated: Date.now() };
     } else {
@@ -438,7 +481,7 @@ function handleResetSession(sendResponse) {
     sendResponse({ success: true });
 }
 
-// 更新设置
+// Update settings
 function handleUpdateSettings(newSettings, sendResponse) {
     try {
         captureState.settings = { ...captureState.settings, ...newSettings };
@@ -451,17 +494,17 @@ function handleUpdateSettings(newSettings, sendResponse) {
     }
 }
 
-// 添加域名到黑名单
+// Add a domain to the blocked list
 function handleAddBlockedDomain(domain, sendResponse) {
     try {
         if (!domain || typeof domain !== 'string') {
             throw new Error('Invalid domain');
         }
         
-        // 清理域名格式
+        // Normalize the domain
         const cleanDomain = domain.toLowerCase().replace(/^https?:\/\//, '').replace(/\/.*$/, '');
         
-        // 检查是否已存在
+        // Skip duplicates
         if (!captureState.settings.blockedDomains.includes(cleanDomain)) {
             captureState.settings.blockedDomains.push(cleanDomain);
             saveSettings();
@@ -485,7 +528,7 @@ function handleAddBlockedDomain(domain, sendResponse) {
     }
 }
 
-// 从黑名单移除域名
+// Remove a domain from the blocked list
 function handleRemoveBlockedDomain(domain, sendResponse) {
     try {
         const index = captureState.settings.blockedDomains.indexOf(domain);
@@ -511,7 +554,7 @@ function handleRemoveBlockedDomain(domain, sendResponse) {
     }
 }
 
-// 处理Web请求
+// Handle web requests
 function handleWebRequest(details) {
     if (!captureState.isCapturing) return;
 
@@ -519,12 +562,12 @@ function handleWebRequest(details) {
         const url = new URL(details.url);
         const domain = url.hostname;
 
-        // 检查是否应该捕获此请求
+        // Check whether this request should be captured
         if (!shouldCaptureRequest(domain, details.type)) {
             return;
         }
 
-        // 创建请求记录
+        // Create the request record
         const requestRecord = {
             id: `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
             url: details.url,
@@ -533,10 +576,10 @@ function handleWebRequest(details) {
             type: details.type || 'other',
             timestamp: Date.now(),
             initiator: details.initiator || 'unknown',
-            status: 'pending' // 将在响应时更新
+            status: 'pending' // Updated when the response completes
         };
 
-        // 添加详细信息（如果启用）
+        // Attach extra details when enabled
         if (captureState.settings.saveDetails) {
             requestRecord.requestHeaders = details.requestHeaders || [];
             if (details.requestBody) {
@@ -544,10 +587,10 @@ function handleWebRequest(details) {
             }
         }
 
-        // 添加到捕获列表（FIFO策略）
+        // Add to the capture list using FIFO trimming
         addRequestToCapture(requestRecord);
 
-        // 通知popup更新
+        // Notify the popup UI
         notifyPopupUpdate();
 
     } catch (error) {
@@ -555,12 +598,12 @@ function handleWebRequest(details) {
     }
 }
 
-// 处理Web响应
+// Handle web responses
 function handleWebResponse(details) {
     if (!captureState.isCapturing) return;
 
     try {
-        // 查找对应的请求记录并更新状态
+        // Find the matching request and update its status
         const requestIndex = captureState.capturedRequests.findIndex(
             req => req.url === details.url && req.status === 'pending'
         );
@@ -587,36 +630,36 @@ function getResponseSize(responseHeaders = []) {
     return Number.isFinite(size) ? size : 0;
 }
 
-// 检查是否应该捕获请求
+// Decide whether a request should be captured
 function shouldCaptureRequest(domain, type) {
     // Block internal extension resources
     if (!domain && type === 'other') return false;
     if (domain && domain.startsWith('chrome-extension')) return false;
-    // 新增：支持多种捕获模式
+    // Support multiple capture modes
     const captureMode = captureState.settings.captureMode || 'main_domain_only';
     
     switch (captureMode) {
         case 'main_domain_only':
-            // 原有模式：只捕获主域名
+            // Capture the primary domain only
             if (domain !== captureState.targetDomain) {
                 return false;
             }
             break;
             
         case 'include_subdomains':
-            // 包含子域名模式
+            // Include subdomains
             if (!domain.endsWith(captureState.targetDomain) && domain !== captureState.targetDomain) {
                 return false;
             }
             break;
             
         case 'all_domains':
-            // 捕获所有域名（包括iframe和第三方资源）
-            // 不进行域名过滤，捕获所有请求
+            // Capture all domains, including iframes and third-party resources
+            // No domain filtering in this mode
             break;
             
         case 'whitelist':
-            // 白名单模式：只捕获指定的域名列表
+            // Whitelist mode: only capture approved domains
             const allowedDomains = captureState.settings.allowedDomains || [captureState.targetDomain];
             const isAllowed = allowedDomains.some(allowedDomain => 
                 domain === allowedDomain || domain.endsWith('.' + allowedDomain)
@@ -627,27 +670,27 @@ function shouldCaptureRequest(domain, type) {
             break;
             
         default:
-            // 默认只捕获主域名
+            // Default to primary-domain-only capture
             if (domain !== captureState.targetDomain) {
                 return false;
             }
     }
 
-    // 检查广告屏蔽
+    // Apply ad blocking
     if (captureState.settings.blockAds && isAdDomain(domain)) {
         return false;
     }
 
-    // 检查静态资源屏蔽
+    // Apply static-resource blocking
     if (captureState.settings.blockStatic && STATIC_TYPES.includes(type)) {
         return false;
     }
 
-    // 检查自定义屏蔽域名（精细：支持完整匹配和后缀匹配）
+    // Apply custom blocked-domain matching, including exact and suffix matches
     const blockedList = captureState.settings.blockedDomains || [];
     const lowerDomain = domain.toLowerCase();
     if (blockedList.some(b => lowerDomain === b || lowerDomain.endsWith('.' + b) || lowerDomain.includes(b))) {
-        // 针对 google.com 及其子域强制阻断
+        // Explicitly block google.com and its subdomains
         if (/\.google\.com$/.test(lowerDomain) || lowerDomain === 'google.com' || lowerDomain.endsWith('.google.com')) {
             return false;
         }
@@ -657,12 +700,12 @@ function shouldCaptureRequest(domain, type) {
     return true;
 }
 
-// 检查是否为广告域名
+// Check whether the domain is an ad domain
 function isAdDomain(domain) {
     return AD_DOMAINS.some(adDomain => domain.includes(adDomain));
 }
 
-// 添加请求到捕获列表
+// Add a request to the capture list
 function addRequestToCapture(requestRecord) {
     if (!captureState.targetDomain) return;
     const domain = captureState.targetDomain;
@@ -693,9 +736,9 @@ function addRequestToCapture(requestRecord) {
     schedulePersist();
 }
 
-// 通知popup更新数据
+// Notify the popup about updated data
 function notifyPopupUpdate() {
-    // 节流：避免过于频繁的更新
+    // Throttle popup updates
     if (!notifyPopupUpdate.lastUpdate || Date.now() - notifyPopupUpdate.lastUpdate > 500) {
         chrome.runtime.sendMessage({
             type: 'data_updated',
@@ -706,13 +749,13 @@ function notifyPopupUpdate() {
                 targetDomain: captureState.targetDomain
             }
         }).catch(() => {
-            // Popup可能已关闭，忽略错误
+            // The popup may already be closed
         });
         notifyPopupUpdate.lastUpdate = Date.now();
     }
 }
 
-// 加载设置
+// Load settings
 function loadSettings() {
     chrome.storage.local.get(['captureSettings'], (result) => {
         if (result.captureSettings) {
@@ -757,39 +800,39 @@ function pruneBlockedFromCurrentSession() {
     }
 }
 
-// 保存设置
+// Save settings
 function saveSettings() {
     chrome.storage.local.set({ 
         captureSettings: captureState.settings 
     });
 }
 
-// 监听扩展图标点击事件
+// Listen for action-icon clicks
 chrome.action.onClicked.addListener((tab) => {
     openCaptureWindow();
 });
 
-// 打开捕获窗口
-async function openCaptureWindow() {
+// Open the capture window
+async function openCaptureWindow(requestedUrl = '') {
     try {
-        // 如果窗口已经存在，则聚焦到该窗口
+        // Focus the existing window when it is already open
         if (captureWindow) {
             try {
                 await chrome.windows.update(captureWindow.id, { focused: true });
                 return;
             } catch (error) {
-                // 窗口可能已经被关闭，重新创建
+                // The previous window may have been closed; recreate it
                 captureWindow = null;
             }
         }
 
-        // 获取当前活动窗口的位置，用于智能定位新窗口
+        // Use the current window position to place the new floating window
         const currentWindow = await chrome.windows.getCurrent();
         
-        // 计算新窗口位置：在当前窗口右侧，如果空间不足则在左侧
-        const screenWidth = 1920; // 默认屏幕宽度，实际会根据显示器调整
-        const windowWidth = 850;
-        const windowHeight = 650;
+        // Prefer placing the new window to the right; fall back to the left when needed
+        const screenWidth = 1920; // Default screen width fallback
+        const windowWidth = 980;
+        const windowHeight = 720;
         
         let left = currentWindow.left + currentWindow.width + 10;
         if (left + windowWidth > screenWidth) {
@@ -798,9 +841,11 @@ async function openCaptureWindow() {
         
         const top = currentWindow.top;
 
-        // 创建新的扩展窗口
+        // Create the extension window
+        const query = requestedUrl ? `?view=window&url=${encodeURIComponent(requestedUrl)}` : '?view=window';
+
         captureWindow = await chrome.windows.create({
-            url: 'popup.html',
+            url: `popup.html${query}`,
             type: 'popup',
             width: windowWidth,
             height: windowHeight,
@@ -815,7 +860,7 @@ async function openCaptureWindow() {
     }
 }
 
-// 关闭窗口
+// Close the capture window
 function handleCloseWindow(sendResponse) {
     if (captureWindow) {
         chrome.windows.remove(captureWindow.id).then(() => {
@@ -829,7 +874,7 @@ function handleCloseWindow(sendResponse) {
     }
 }
 
-// 最小化窗口
+// Minimize the capture window
 function handleMinimizeWindow(sendResponse) {
     if (captureWindow) {
         chrome.windows.update(captureWindow.id, { state: 'minimized' }).then(() => {
@@ -842,16 +887,16 @@ function handleMinimizeWindow(sendResponse) {
     }
 }
 
-// 打开独立窗口
-function handleOpenWindow(sendResponse) {
-    openCaptureWindow().then(() => {
+// Open the standalone window
+function handleOpenWindow(sendResponse, requestedUrl) {
+    openCaptureWindow(requestedUrl || '').then(() => {
         sendResponse({ success: true });
     }).catch((error) => {
         sendResponse({ success: false, error: error.message });
     });
 }
 
-// 监听窗口关闭事件
+// Track window close events
 chrome.windows.onRemoved.addListener((windowId) => {
     if (captureWindow && captureWindow.id === windowId) {
         captureWindow = null;

@@ -2,7 +2,7 @@
     "manifest_version": 3,
     "name": "DevTrace - Network Request Inspector",
     "short_name": "DevTrace",
-    "version": "3.0.5",
+    "version": "0.0.0",
     "description": "Developer network inspection and API/resource debugging extension with live filtering, session restore, and structured export.",
     "permissions": [
       "tabs",
@@ -33,6 +33,6 @@
       "48": "icon48.png",
       "128": "icon128.png"
     },
-    "homepage_url": "https://gamelibs.github.io/devtrace-extension/",
+    "homepage_url": "https://vidar1031.github.io/devtrace/",
     "author": "vidar"
   }

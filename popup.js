@@ -1,4 +1,4 @@
-// DevTrace popup application v3.0.5
+// DevTrace popup application v0.0.0
 const DEVTRACE_DEBUG = false;
 const debugLog = (...args) => {
     if (DEVTRACE_DEBUG) {
@@ -23,25 +23,26 @@ const {
 } = window.DevTracePopupServices;
 
 /**
- * 主应用类
+ * Main application class
  */
 class WebRequestCaptureApp {    constructor() {
+        this.viewMode = this.resolveViewMode();
         this.currentData = [];
         this.filteredData = [];
         this.isCapturing = false;
-        this.downloadStatus = new Map(); // 添加下载状态追踪
+        this.downloadStatus = new Map(); // Track per-resource download status
         this.currentTargetDomain = null;
         this.persistDownloadStatusTimer = null;
         this.isBatchExporting = false;
-        this.excludedResources = new Set(); // 追踪被排除的资源
+        this.excludedResources = new Set(); // Track excluded resources
         this.settings = {
             maxRequests: 100,
             saveDetails: false,
             blockAds: true,
             blockStatic: false,
-            defaultView: 'popup',  // 'popup' 或 'window'
-            captureMode: 'all_domains', // 新增：捕获模式
-            allowedDomains: [] // 新增：白名单域名列表
+            defaultView: 'popup',  // 'popup' or 'window'
+            captureMode: 'all_domains', // Active capture mode
+            allowedDomains: [] // Whitelisted domain list
         };
         this.filters = {
             domain: '',
@@ -53,11 +54,12 @@ class WebRequestCaptureApp {    constructor() {
     }
 
     /**
-     * 初始化应用
+     * Initialize the application
      */
     async initializeApp() {
         try {
             debugLog('DevTrace: Initializing application...');
+            this.applyViewMode();
             this.applyRuntimeMetadata();
             await this.loadSettings();
             this.bindEvents();
@@ -65,12 +67,12 @@ class WebRequestCaptureApp {    constructor() {
             this.loadSavedUrl();
             this.updateUI();
             
-            // 检查用户偏好，如果设置为窗口模式且当前是popup，则自动打开独立窗口
+            // Auto-open the standalone window when the user prefers window mode
             if (this.settings.defaultView === 'window' && this.isPopupMode()) {
                 debugLog('DevTrace: User prefers window mode, auto-opening standalone window...');
                 setTimeout(() => {
                     this.openWindow();
-                    // 立即关闭popup
+                    // Close the popup immediately afterward
                     setTimeout(() => {
                         window.close();
                     }, 300);
@@ -83,7 +85,7 @@ class WebRequestCaptureApp {    constructor() {
             this.showError('Failed to initialize application');
         }
     }    /**
-     * 从 manifest 同步运行时元信息
+     * Apply runtime metadata from the manifest
      */
     applyRuntimeMetadata() {
         try {
@@ -99,14 +101,23 @@ class WebRequestCaptureApp {    constructor() {
     }
 
     /**
-     * 绑定事件监听器
+     * Bind event listeners
      */
     bindEvents() {
-        // 控制按钮
+        // Primary controls
         document.getElementById('startButton').addEventListener('click', () => this.startCapture());
         document.getElementById('stopButton').addEventListener('click', () => this.stopCapture());
-        document.getElementById('openWindowButton').addEventListener('click', () => this.openWindow());
-        document.getElementById('helpPageTrigger').addEventListener('click', () => this.openHelpPage());
+        document.getElementById('openWindowButton').addEventListener('click', () => {
+            if (this.isWindowMode()) {
+                this.closeWindow();
+                return;
+            }
+            this.openWindow();
+        });
+        document.getElementById('helpPageTrigger').addEventListener('click', (event) => {
+            event.preventDefault();
+            this.openHelpPage();
+        });
         document.getElementById('helpPageTrigger').addEventListener('keydown', (event) => {
             if (event.key === 'Enter' || event.key === ' ') {
                 event.preventDefault();
@@ -115,7 +126,7 @@ class WebRequestCaptureApp {    constructor() {
         });
         this.setupConfirmDialog();
         
-        // 数据操作按钮
+        // Data action buttons
         document.getElementById('clearButton').addEventListener('click', () => this.clearData());
         const resetBtn = document.getElementById('resetSessionButton');
         if (resetBtn) {
@@ -124,13 +135,13 @@ class WebRequestCaptureApp {    constructor() {
         document.getElementById('exportButton').addEventListener('click', () => this.exportData());
         document.getElementById('exportResourcesButton').addEventListener('click', () => this.exportResources());
         
-        // 筛选控件
+        // Filter controls
         document.getElementById('domainFilter').addEventListener('change', (e) => this.updateFilter('domain', e.target.value));
         document.getElementById('statusFilter').addEventListener('change', (e) => this.updateFilter('status', e.target.value));
         document.getElementById('typeFilter').addEventListener('change', (e) => this.updateFilter('type', e.target.value));
         document.getElementById('clearFilters').addEventListener('click', () => this.clearFilters());
         
-        // 资源选择复选框事件监听器
+        // Resource selection checkboxes
         document.getElementById('selectAllCheckbox').addEventListener('change', (e) => this.toggleSelectAll(e.target.checked));
         document.addEventListener('change', (e) => {
             if (e.target.classList.contains('resource-checkbox')) {
@@ -138,27 +149,27 @@ class WebRequestCaptureApp {    constructor() {
             }
         });
         
-        // 设置面板
+        // Settings panel
         document.getElementById('settingsButton').addEventListener('click', () => this.toggleSettings());
         document.getElementById('saveSettings').addEventListener('click', () => this.saveSettings());
         document.getElementById('cancelSettings').addEventListener('click', () => this.closeSettings());
         
-        // 捕获模式变化事件
+        // Capture mode changes
         document.getElementById('captureModeSelect').addEventListener('change', (e) => {
             this.toggleWhitelistSettings(e.target.value === 'whitelist');
         });
         
-        // 黑名单域名管理
+        // Blocked-domain management
         this.setupBlacklistHandlers();
         
-        // URL输入框回车事件
+        // Start capture on Enter in the URL field
         document.getElementById('urlInput').addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {
                 this.startCapture();
             }
         });
 
-        // 添加窗口拖拽功能
+        // Enable standalone-window dragging
         this.addDragFunctionality();
     }
 
@@ -182,6 +193,38 @@ class WebRequestCaptureApp {    constructor() {
                 this.resolveConfirmDialog(false);
             }
         });
+    }
+
+    resolveViewMode() {
+        const params = new URLSearchParams(window.location.search);
+        return params.get('view') === 'window' ? 'window' : 'popup';
+    }
+
+    getSeedUrlFromLocation() {
+        const params = new URLSearchParams(window.location.search);
+        return params.get('url') || '';
+    }
+
+    isWindowMode() {
+        return this.viewMode === 'window';
+    }
+
+    applyViewMode() {
+        const body = document.body;
+        const openWindowButton = document.getElementById('openWindowButton');
+        if (!body || !openWindowButton) return;
+
+        body.classList.toggle('window-mode', this.isWindowMode());
+
+        if (this.isWindowMode()) {
+            openWindowButton.innerHTML = '<span class="close-window-icon">×</span>';
+            openWindowButton.title = 'Close floating window';
+            openWindowButton.setAttribute('aria-label', 'Close floating window');
+        } else {
+            openWindowButton.innerHTML = '<span class="window-icon"></span>';
+            openWindowButton.title = 'Open in separate window';
+            openWindowButton.setAttribute('aria-label', 'Open in separate window');
+        }
     }
 
     async showConfirmDialog({
@@ -228,19 +271,19 @@ class WebRequestCaptureApp {    constructor() {
     }
 
     /**
-     * 设置黑名单域名处理器
+     * Set up blocked-domain handlers
      */
     setupBlacklistHandlers() {
         const addDomainBtn = document.getElementById('addBlockedDomainBtn');
         const domainInput = document.getElementById('blockedDomainInput');
         
         if (addDomainBtn && domainInput) {
-            // 添加域名按钮点击事件
+            // Add a blocked domain on button click
             addDomainBtn.addEventListener('click', () => {
                 this.addBlockedDomain();
             });
             
-            // 输入框回车事件
+            // Add a blocked domain on Enter
             domainInput.addEventListener('keypress', (e) => {
                 if (e.key === 'Enter') {
                     this.addBlockedDomain();
@@ -248,12 +291,12 @@ class WebRequestCaptureApp {    constructor() {
             });
         }
         
-        // 加载并显示当前黑名单
+        // Load and display the blocked list
         this.loadBlockedDomains();
     }
 
     /**
-     * 添加黑名单域名
+     * Add a blocked domain
      */
     addBlockedDomain() {
         const input = document.getElementById('blockedDomainInput');
@@ -264,21 +307,21 @@ class WebRequestCaptureApp {    constructor() {
             return;
         }
         
-        // 基本域名格式验证
+        // Basic domain validation
         if (!isValidDomain(domain)) {
             this.showToast('Please enter a valid domain name (e.g., example.com)', 'error');
             return;
         }
         
-        // 发送添加黑名单域名的消息
+        // Send the add-blocked-domain request
         chrome.runtime.sendMessage({
             message: 'add_blocked_domain',
             domain: domain
         }, (response) => {
             if (response && response.success) {
                 this.showToast(`Domain "${domain}" added to blacklist`, 'success');
-                input.value = ''; // 清空输入框
-                this.loadBlockedDomains(); // 重新加载显示
+                input.value = ''; // Clear the input field
+                this.loadBlockedDomains(); // Refresh the rendered list
             } else {
                 const error = response?.error || 'Failed to add domain';
                 if (error.includes('already exists')) {
@@ -291,7 +334,7 @@ class WebRequestCaptureApp {    constructor() {
     }
 
     /**
-     * 移除黑名单域名
+     * Remove a blocked domain
      */
     removeBlockedDomain(domain) {
         chrome.runtime.sendMessage({
@@ -300,7 +343,7 @@ class WebRequestCaptureApp {    constructor() {
         }, (response) => {
             if (response && response.success) {
                 this.showToast(`Domain "${domain}" removed from blacklist`, 'success');
-                this.loadBlockedDomains(); // 重新加载显示
+                this.loadBlockedDomains(); // Refresh the rendered list
             } else {
                 this.showToast(response?.error || 'Failed to remove domain', 'error');
             }
@@ -308,7 +351,7 @@ class WebRequestCaptureApp {    constructor() {
     }
 
     /**
-     * 加载并显示黑名单域名
+     * Load and display blocked domains
      */
     loadBlockedDomains() {
         chrome.runtime.sendMessage({ message: 'get_settings' }, (response) => {
@@ -319,7 +362,7 @@ class WebRequestCaptureApp {    constructor() {
     }
 
     /**
-     * 显示黑名单域名标签
+     * Render blocked-domain tags
      */
     displayBlockedDomains(blockedDomains) {
         const container = document.getElementById('blockedDomainsContainer');
@@ -340,7 +383,7 @@ class WebRequestCaptureApp {    constructor() {
                 <button class="remove-btn" data-domain="${domain}" title="Remove ${domain}">×</button>
             `;
             
-            // 添加删除按钮事件
+            // Attach the remove button handler
             const removeBtn = tag.querySelector('.remove-btn');
             removeBtn.addEventListener('click', () => {
                 this.removeBlockedDomain(domain);
@@ -351,7 +394,7 @@ class WebRequestCaptureApp {    constructor() {
     }
 
     /**
-     * 设置消息监听器
+     * Set up runtime message listeners
      */
     setupMessageListener() {
         chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
@@ -362,27 +405,71 @@ class WebRequestCaptureApp {    constructor() {
     }
 
     /**
-     * 加载保存的URL
+     * Load the saved URL
      */
-    loadSavedUrl() {
-        chrome.storage.local.get(['lastUrl'], (result) => {
-            if (result.lastUrl && result.lastUrl.trim()) {
-                try {
-                    // 验证保存的URL是否有效
-                    const testUrl = result.lastUrl.startsWith('http') ? result.lastUrl : `https://${result.lastUrl}`;
-                    new URL(testUrl); // 测试URL是否有效
-                    document.getElementById('urlInput').value = result.lastUrl;
-                } catch (error) {
-                    console.warn('Saved URL is invalid, clearing it:', result.lastUrl);
-                    // 清除无效的保存URL
-                    chrome.storage.local.remove(['lastUrl']);
-                }
+    async loadSavedUrl() {
+        const urlInput = document.getElementById('urlInput');
+        if (!urlInput) return;
+
+        const seededUrl = this.getSeedUrlFromLocation();
+        if (seededUrl) {
+            urlInput.value = seededUrl;
+            return;
+        }
+
+        const [storageResult, captureResult] = await Promise.all([
+            this.getStorageValue(['lastUrl']),
+            this.sendRuntimeMessage({ message: 'get_captured_data' }).catch(() => null)
+        ]);
+
+        const fallbackUrl = this.resolvePreferredUrl(storageResult?.lastUrl, captureResult?.targetDomain);
+
+        if (this.isWindowMode()) {
+            if (fallbackUrl) {
+                urlInput.value = fallbackUrl;
+            }
+            return;
+        }
+
+        chrome.tabs.query({ active: true, lastFocusedWindow: true }, (tabs) => {
+            const activeTabUrl = tabs?.[0]?.url;
+            if (this.isInspectableUrl(activeTabUrl)) {
+                urlInput.value = activeTabUrl;
+                return;
+            }
+
+            if (fallbackUrl) {
+                urlInput.value = fallbackUrl;
             }
         });
     }
 
+    resolvePreferredUrl(lastUrl, targetDomain) {
+        if (lastUrl && lastUrl.trim()) {
+            try {
+                const testUrl = lastUrl.startsWith('http') ? lastUrl : `https://${lastUrl}`;
+                new URL(testUrl);
+                return lastUrl;
+            } catch (error) {
+                console.warn('Saved URL is invalid, clearing it:', lastUrl);
+                chrome.storage.local.remove(['lastUrl']);
+            }
+        }
+
+        if (targetDomain && typeof targetDomain === 'string') {
+            return `https://${targetDomain}`;
+        }
+
+        return '';
+    }
+
+    isInspectableUrl(url) {
+        if (!url || typeof url !== 'string') return false;
+        return /^https?:\/\//i.test(url);
+    }
+
     /**
-     * 加载设置
+     * Load settings
      */
     async loadSettings() {
         return new Promise((resolve) => {
@@ -486,8 +573,16 @@ class WebRequestCaptureApp {    constructor() {
         await this.setStorageValue({ downloadStatusByDomain: allStatuses });
     }
 
+    resetVisibleCaptureContext() {
+        this.currentTargetDomain = null;
+        const urlInput = document.getElementById('urlInput');
+        const targetDomain = document.getElementById('targetDomain');
+        if (urlInput) urlInput.value = '';
+        if (targetDomain) targetDomain.textContent = '-';
+    }
+
     /**
-     * 开始捕获
+     * Start capture
      */
     async startCapture() {
         debugLog('DevTrace: startCapture() called');
@@ -502,17 +597,17 @@ class WebRequestCaptureApp {    constructor() {
         }
 
         try {
-            // 添加协议前缀（如果缺少）
+            // Add a protocol when one is missing
             const fullUrl = url.startsWith('http') ? url : `https://${url}`;
             debugLog('DevTrace: Full URL:', fullUrl);
             
             const targetDomain = new URL(fullUrl).hostname;
             debugLog('DevTrace: Target domain:', targetDomain);
             
-            // 保存URL
+            // Persist the entered URL
             chrome.storage.local.set({ lastUrl: url });
 
-            // 每次重新开始前，自动停止旧监听并清空旧数据
+            // Stop old listeners and clear stale data before restarting
             await this.sendRuntimeMessage({ message: 'stop_capture' });
             await this.sendRuntimeMessage({ message: 'clear_requests' });
             await this.clearPersistedDownloadStatus(targetDomain);
@@ -526,7 +621,7 @@ class WebRequestCaptureApp {    constructor() {
             this.updateStats();
             this.updateCaptureState();
 
-            // 发送开始捕获消息
+            // Send the start-capture request
             const response = await this.sendRuntimeMessage({
                 message: 'start_capture',
                 url: fullUrl
@@ -560,7 +655,7 @@ class WebRequestCaptureApp {    constructor() {
     }
 
     /**
-     * 停止捕获
+     * Stop capture
      */
     stopCapture() {
         chrome.runtime.sendMessage({ message: 'stop_capture' }, (response) => {
@@ -573,33 +668,33 @@ class WebRequestCaptureApp {    constructor() {
             }
         });
     }    /**
-     * 在原浏览器窗口打开URL
+     * Open the URL in the original browser window
      */
     openUrlInCurrentTab(url) {
-        // 获取所有非扩展窗口
+        // Find all regular browser windows
         chrome.windows.getAll({ windowTypes: ['normal'] }, (windows) => {
             if (windows.length > 0) {
-                // 找到最近活动的普通浏览器窗口
+                // Pick the most recently focused browser window
                 const targetWindow = windows.find(w => w.focused) || windows[0];
                 
-                // 在该窗口的活动标签页中打开URL
+                // Reuse the active tab in that window
                 chrome.tabs.query({ active: true, windowId: targetWindow.id }, (tabs) => {
                     if (tabs.length > 0) {
                         chrome.tabs.update(tabs[0].id, { url: url });
                     } else {
-                        // 如果没有活动标签页，创建新标签页
+                        // Create a new tab when no active tab exists
                         chrome.tabs.create({ url: url, windowId: targetWindow.id });
                     }
                 });
             } else {
-                // 如果没有普通浏览器窗口，创建新窗口
+                // Create a new browser window when none exist
                 chrome.windows.create({ url: url, type: 'normal' });
             }
         });
     }
 
     /**
-     * 处理数据更新
+     * Handle data updates
      */
     async handleDataUpdate(data) {
         this.currentData = data.requests || [];
@@ -619,7 +714,7 @@ class WebRequestCaptureApp {    constructor() {
     }
 
     /**
-     * 更新筛选器
+     * Update a filter
      */
     updateFilter(filterType, value) {
         this.filters[filterType] = value;
@@ -629,16 +724,16 @@ class WebRequestCaptureApp {    constructor() {
     }
 
     /**
-     * 应用筛选器
+     * Apply filters
      */
     applyFilters() {
         this.filteredData = this.currentData.filter(request => {
-            // 域名筛选
+            // Domain filter
             if (this.filters.domain && request.domain !== this.filters.domain) {
                 return false;
             }
             
-            // 状态码筛选
+            // Status filter
             if (this.filters.status) {
                 const status = request.status;
                 const statusCategory = getStatusCategory(status);
@@ -647,7 +742,7 @@ class WebRequestCaptureApp {    constructor() {
                 }
             }
             
-            // 类型筛选
+            // Type filter
             if (this.filters.type && request.type !== this.filters.type) {
                 return false;
             }
@@ -655,15 +750,15 @@ class WebRequestCaptureApp {    constructor() {
             return true;
         });
 
-        // 更新筛选器选项
+        // Refresh filter options
         this.updateFilterOptions();
     }
 
     /**
-     * 更新筛选器选项
+     * Refresh filter options
      */
     updateFilterOptions() {
-        // 更新域名选项
+        // Refresh domain options
         const domains = [...new Set(this.currentData.map(req => req.domain))];
         const domainSelect = document.getElementById('domainFilter');
         const currentDomain = domainSelect.value;
@@ -693,18 +788,18 @@ class WebRequestCaptureApp {    constructor() {
     }
 
     /**
-     * 清除筛选器
+     * Clear filters
      */
     clearFilters() {
-        // 重置筛选器状态
+        // Reset internal filter state
         this.filters = { domain: '', status: '', type: '' };
         
-        // 重置UI控件
+        // Reset the UI controls
         document.getElementById('domainFilter').value = '';
         document.getElementById('statusFilter').value = '';
         document.getElementById('typeFilter').value = '';
         
-        // 重新应用筛选（实际上是显示所有数据）
+        // Reapply filters, which effectively shows all data
         this.applyFilters();
         this.updateTable();
         this.updateStats();
@@ -713,7 +808,7 @@ class WebRequestCaptureApp {    constructor() {
     }
 
     /**
-     * 更新表格
+     * Update the table
      */    updateTable() {
         const tableBody = document.getElementById('dataTableBody');
           if (this.filteredData.length === 0) {
@@ -732,7 +827,7 @@ class WebRequestCaptureApp {    constructor() {
             const statusClass = `status-${getStatusCategory(request.status)}`;
             const size = this.formatSize(request.size || 0);
             
-            // 获取下载状态
+            // Read the current download state
             const downloadStatus = this.getDownloadStatus(request.url);
             let downloadStatusHtml = '';
             let actionButtonHtml = '';
@@ -777,15 +872,15 @@ class WebRequestCaptureApp {    constructor() {
         }).join('');
 
         tableBody.innerHTML = rows;
-          // 添加保存按钮的事件监听器
+          // Attach Save button listeners
         this.addSaveButtonListeners();
         
-        // 更新全选复选框状态
+        // Refresh the select-all checkbox state
         this.updateSelectAllCheckbox();
     }
 
     /**
-     * 添加保存按钮的事件监听器
+     * Attach Save button listeners
      */
     addSaveButtonListeners() {
         const saveButtons = document.querySelectorAll('.save-btn[data-url]');
@@ -797,7 +892,7 @@ class WebRequestCaptureApp {    constructor() {
             });
         });
     }/**
-     * 格式化文件大小
+     * Format file size
      */
     formatSize(bytes) {
         if (!bytes || bytes <= 0) return '-';
@@ -807,27 +902,28 @@ class WebRequestCaptureApp {    constructor() {
     }
 
     /**
-     * 更新统计信息
+     * Update summary stats
      */
     updateStats() {
         document.getElementById('captureCount').textContent = this.currentData.length;
         document.getElementById('filteredCount').textContent = this.filteredData.length;
+        document.getElementById('footerFilteredCount').textContent = this.filteredData.length;
         document.getElementById('totalRequests').textContent = this.currentData.length;
         
-        // 计算内存使用
+        // Estimate memory usage
         const memoryKB = Math.round(JSON.stringify(this.currentData).length / 1024);
         document.getElementById('memoryUsage').textContent = `${memoryKB} KB`;
         
-        // 更新可导出资源数量
+        // Refresh the exportable-resource count
         this.updateExportResourcesButton();
     }    /**
-     * 更新导出资源按钮状态
+     * Update the Export Resources button state
      */
     updateExportResourcesButton() {
         const exportResourcesBtn = document.getElementById('exportResourcesButton');
         if (!exportResourcesBtn) return;
 
-        // 使用选中的可下载资源数量
+        // Use the number of selected downloadable resources
         const selectedDownloadableCount = this.getSelectedResourcesCount();
 
         if (selectedDownloadableCount > 0) {
@@ -844,7 +940,7 @@ class WebRequestCaptureApp {    constructor() {
     }
 
     /**
-     * 更新捕获状态
+     * Update capture-state UI
      */
     updateCaptureState() {
         const statusDot = document.getElementById('statusDot');
@@ -862,17 +958,19 @@ class WebRequestCaptureApp {    constructor() {
         if (startButton) startButton.disabled = capturing;
         if (stopButton) stopButton.disabled = !capturing;
     }    /**
-     * 清空数据
+     * Clear captured data
      */
     async clearData() {
-        if (this.currentData.length === 0) {
+        const requestCount = this.currentData.length;
+
+        if (requestCount === 0) {
             this.showError('No data to clear');
             return;
         }
 
         const confirmed = await this.showConfirmDialog({
             title: 'Clear Captured Data',
-            message: `This will permanently remove all ${this.currentData.length} captured requests from the current session.`,
+            message: `This will permanently remove all ${requestCount} captured requests from the current session.`,
             confirmLabel: 'Clear Data',
             danger: true
         });
@@ -881,10 +979,11 @@ class WebRequestCaptureApp {    constructor() {
 
         chrome.runtime.sendMessage({ message: 'clear_requests' }, (response) => {
             if (response && response.success) {
+                const domainToClear = this.currentTargetDomain;
                 this.currentData = [];
                 this.filteredData = [];
                 this.downloadStatus.clear();
-                this.clearPersistedDownloadStatus().catch(() => {});
+                this.clearPersistedDownloadStatus(domainToClear).catch(() => {});
                 this.isBatchExporting = false;
                 this.updateTable();
                 this.updateStats();
@@ -896,9 +995,9 @@ class WebRequestCaptureApp {    constructor() {
     }
 
     /**
-     * 导出数据
+     * Export data
      */    /**
-     * 导出数据（简化为URL数组格式）
+     * Export data as a simplified URL array
      */
     exportData() {
         if (this.filteredData.length === 0) {
@@ -906,7 +1005,7 @@ class WebRequestCaptureApp {    constructor() {
             return;
         }
 
-        // 使用资源检查功能过滤，只导出选中的可下载资源URL
+        // Export only selected downloadable resource URLs
         const selectedDownloadableUrls = this.filteredData
             .filter(request => isDownloadableResource(request) && !this.excludedResources.has(request.url))
             .map(request => request.url);
@@ -916,12 +1015,12 @@ class WebRequestCaptureApp {    constructor() {
             return;
         }
 
-        // 创建简化的JSON数据（仅包含URL数组）
+        // Build simplified JSON containing only URLs
         const dataStr = JSON.stringify(selectedDownloadableUrls, null, 2);
         const blob = new Blob([dataStr], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
 
-        // 生成包含完整时间的文件名
+        // Generate a timestamped filename
         const now = new Date();
         const dateStr = now.getFullYear() + 
                        String(now.getMonth() + 1).padStart(2, '0') + 
@@ -944,35 +1043,35 @@ class WebRequestCaptureApp {    constructor() {
             URL.revokeObjectURL(url);
         });
     }/**
-     * 保存单个资源
+     * Save a single resource
      */
     async saveIndividualResource(url, index) {
-        // 从过滤后的数据中找到对应的资源
+        // Resolve the resource from the filtered dataset
         const resource = this.filteredData[index];
         if (!resource || resource.url !== url) {
             this.showToast('Resource not found', 'error');
             return;
         }
 
-        // 检查是否可下载
+        // Ensure the resource type is downloadable
         if (!isDownloadableResource(resource)) {
             this.showToast('This resource type is not downloadable', 'warning');
             return;
         }        try {
-            // 第一步：更新状态为正在下载
+            // Step 1: mark the row as downloading
             this.updateResourceStatus(index, 'downloading');
             
-            // 第二步：打开文件夹选择器
+            // Step 2: open the directory picker
             debugLog('Opening folder picker for resource:', resource.url);
               if (window.showDirectoryPicker) {
-                // 先显示说明
+                // Explain the browser fallback behavior first
                 this.showToast('📁 Note: Due to browser security, some files may be saved to Downloads folder with organized structure', 'info');
                 
                 const directoryHandle = await window.showDirectoryPicker({
                     mode: 'readwrite'
                 });
                   debugLog('User selected folder:', directoryHandle.name);
-                this.showToast(`Selected folder: ${directoryHandle.name}`, 'success');                // 第三步：保存资源（智能选择方案）
+                this.showToast(`Selected folder: ${directoryHandle.name}`, 'success');                // Step 3: save the resource using the best available path
                 await this.saveResourceSmart(resource, directoryHandle, index);
             } else {
                 this.showToast('Your browser does not support folder picker', 'error');
@@ -987,26 +1086,26 @@ class WebRequestCaptureApp {    constructor() {
             }        }    }
 
     /**
-     * 智能保存资源（尝试直接保存，失败则降级到Downloads）
+     * Save a resource intelligently, falling back to Downloads when needed
      */
     async saveResourceSmart(resource, directoryHandle, index) {
         try {
-            // 先尝试直接保存到用户选择的目录
+            // Try writing directly into the selected directory first
             await this.saveResourceToUserDirectory(resource, directoryHandle, index);
         } catch (error) {
             debugLog('Direct save failed, falling back to Downloads API:', error.message);
-            // 降级到Downloads API
+            // Fall back to the Downloads API
             this.showToast('⚠️ Using Downloads folder due to browser restrictions...', 'warning');
             await this.saveResourceWithDownloadsAPI(resource, directoryHandle.name, index);
         }
     }
 
     /**
-     * 保存资源到用户选择的目录
+     * Save a resource into the user-selected directory
      */
     async saveResourceToUserDirectory(resource, directoryHandle, index) {
         try {
-            // 解析URL获取域名和路径
+            // Comment
             const url = new URL(resource.url);
             const domain = url.hostname;
             const pathname = url.pathname;
@@ -1015,14 +1114,14 @@ class WebRequestCaptureApp {    constructor() {
             debugLog('  Domain:', domain);
             debugLog('  Path:', pathname);
             
-            // 分析路径，创建目录结构
+            // Comment
             const pathSegments = pathname.split('/').filter(segment => segment !== '');
             debugLog('  Path segments:', pathSegments);
             
-            // 创建域名文件夹
+            // Comment
             let currentHandle = directoryHandle;
             
-            // 第一级：域名文件夹
+            // Comment
             try {
                 const domainHandle = await currentHandle.getDirectoryHandle(domain, { create: true });
                 currentHandle = domainHandle;
@@ -1032,9 +1131,9 @@ class WebRequestCaptureApp {    constructor() {
                 throw new Error(`Failed to create domain folder: ${domain}`);
             }
             
-            // 后续级别：路径文件夹（排除最后一个文件名）
+            // Comment
             if (pathSegments.length > 1) {
-                const directorySegments = pathSegments.slice(0, -1); // 去掉最后的文件名
+                const directorySegments = pathSegments.slice(0, -1); // Comment
                 
                 for (const segment of directorySegments) {
                     if (segment && segment.trim() !== '') {
@@ -1044,74 +1143,74 @@ class WebRequestCaptureApp {    constructor() {
                             debugLog('  Created/accessed path folder:', segment);
                         } catch (error) {
                             console.error(`Failed to create path folder: ${segment}`, error);
-                            // 继续，不中断整个过程
+                            // Comment
                         }
                     }
                 }
-            }            // 获取资源数据
+            }            // Comment
             debugLog('  Fetching resource data...');
             
-            // 尝试直接fetch
+            // Comment
             let blob;
             const response = await fetch(resource.url);
             if (!response.ok) {
                 throw new Error(`HTTP ${response.status}: ${response.statusText}`);
             }
             blob = await response.blob();
-              // 生成文件名
+              // Comment
             const filename = generateFilename(resource, index + 1);
             debugLog('  Generated filename:', filename);
             
-            // 获取文件数据
+            // Comment
             debugLog('  Getting file data...');
             
-            // 创建文件并写入数据
+            // Comment
             const fileHandle = await currentHandle.getFileHandle(filename, { create: true });
             const writable = await fileHandle.createWritable();
             
             await writable.write(blob);
             await writable.close();
             
-            // 更新状态为已下载
+            // Comment
             this.updateResourceStatus(index, 'completed');
             
-            // 显示成功信息
+            // Comment
             const directoryPath = [domain, ...pathSegments.slice(0, -1)].filter(p => p).join('/');
             this.showToast(`✅ File saved: ${directoryPath}/${filename}`, 'success');
               } catch (error) {
             console.error('Failed to save resource to user directory:', error);
             this.updateResourceStatus(index, 'failed');
-            // 重新抛出错误，让上级方法处理降级
+            // Comment
             throw error;
         }
     }    /**
-     * 使用Chrome Downloads API保存单个资源（降级方案）
+     * Comment
      */
     async saveResourceWithDownloadsAPI(resource, folderName, index) {
         try {
-            // 解析URL获取域名和路径
+            // Comment
             const url = new URL(resource.url);
             const domain = url.hostname;
             const pathname = url.pathname;
             
-            // 生成目录路径
+            // Comment
             const pathSegments = pathname.split('/').filter(segment => segment !== '');
-            const directorySegments = pathSegments.slice(0, -1); // 去掉文件名部分
+            const directorySegments = pathSegments.slice(0, -1); // Comment
             
             let directoryPath = domain;
             if (directorySegments.length > 0) {
                 directoryPath += '/' + directorySegments.join('/');
             }
             
-            // 生成文件名
+            // Comment
             const filename = generateFilename(resource, index + 1);
             
-            // 生成完整的下载路径（直接使用用户选择的文件夹名，不添加时间戳）
+            // Comment
             const fullPath = `${folderName}/${directoryPath}/${filename}`;
             
             debugLog('Downloading resource to:', fullPath);
             
-            // 使用Chrome Downloads API下载
+            // Comment
             await new Promise((resolve, reject) => {
                 chrome.downloads.download({
                     url: resource.url,
@@ -1125,7 +1224,7 @@ class WebRequestCaptureApp {    constructor() {
                     } else {
                         debugLog('Download started:', filename);
                         
-                        // 监听下载完成
+                        // Comment
                         const onDownloadChanged = (downloadDelta) => {
                             if (downloadDelta.id === downloadId && downloadDelta.state) {
                                 if (downloadDelta.state.current === 'complete') {
@@ -1143,17 +1242,17 @@ class WebRequestCaptureApp {    constructor() {
                         
                         chrome.downloads.onChanged.addListener(onDownloadChanged);
                         
-                        // 设置超时
+                        // Comment
                         setTimeout(() => {
                             chrome.downloads.onChanged.removeListener(onDownloadChanged);
                             this.updateResourceStatus(index, 'failed');
                             reject(new Error('Download timeout'));
-                        }, 30000); // 30秒超时
+                        }, 30000); // Comment
                     }
                 });
             });
             
-            // 显示成功信息
+            // Comment
             this.showToast(`✅ File saved: Downloads/${fullPath}`, 'success');
             
         } catch (error) {
@@ -1164,7 +1263,7 @@ class WebRequestCaptureApp {    constructor() {
     }
 
     /**
-     * 更新资源状态
+     * Comment
      */
     updateResourceStatus(index, status) {
         const resource = this.filteredData[index];
@@ -1206,7 +1305,7 @@ class WebRequestCaptureApp {    constructor() {
     }
 
     /**
-     * 获取状态文本
+     * Comment
      */
     getStatusText(status) {
         const statusTexts = {
@@ -1221,7 +1320,7 @@ class WebRequestCaptureApp {    constructor() {
     }
 
     /**
-     * 导出资源文件 - 先选择目录，再批量写入该目录
+     * Comment
      */
     async exportResources() {
         if (this.isBatchExporting) {
@@ -1327,7 +1426,7 @@ class WebRequestCaptureApp {    constructor() {
     }
 
     /**
-     * 批量保存资源到用户选择的目录
+     * Comment
      */
     async saveResourceToSelectedDirectory(resource, directoryHandle, index, fileNumber) {
         try {
@@ -1369,7 +1468,7 @@ class WebRequestCaptureApp {    constructor() {
     }
 
     /**
-     * 在用户选择的目录中创建批量导出索引文件
+     * Comment
      */
     async createBatchExportIndexFileInDirectory(directoryHandle, resources) {
         try {
@@ -1418,14 +1517,14 @@ class WebRequestCaptureApp {    constructor() {
     }
 
     /**
-     * 延迟函数
+     * Comment
      */
     sleep(ms) {
         return sleep(ms);
     }
 
     /**
-     * 切换设置面板
+     * Comment
      */
     toggleSettings() {
         const panel = document.getElementById('settingsPanel');
@@ -1436,7 +1535,7 @@ class WebRequestCaptureApp {    constructor() {
     }
 
     /**
-     * 更新设置UI
+     * Comment
      */
     updateSettingsUI() {
         document.getElementById('maxRequestsSetting').value = this.settings.maxRequests;
@@ -1446,20 +1545,20 @@ class WebRequestCaptureApp {    constructor() {
         document.getElementById('defaultViewSetting').value = this.settings.defaultView || 'popup';
         document.getElementById('captureModeSelect').value = this.settings.captureMode || 'all_domains';
         
-        // 设置白名单域名
+        // Comment
         if (this.settings.allowedDomains) {
             document.getElementById('allowedDomainsInput').value = this.settings.allowedDomains.join('\n');
         }
         
-        // 显示/隐藏白名单设置
+        // Comment
         this.toggleWhitelistSettings(this.settings.captureMode === 'whitelist');
         
-        // 加载并显示黑名单域名
+        // Comment
         this.loadBlockedDomains();
     }
 
     /**
-     * 保存设置
+     * Comment
      */
     saveSettings() {
         const newSettings = {
@@ -1490,14 +1589,14 @@ class WebRequestCaptureApp {    constructor() {
     }
 
     /**
-     * 关闭设置面板
+     * Comment
      */
     closeSettings() {
         document.getElementById('settingsPanel').style.display = 'none';
     }
 
     /**
-     * 切换白名单设置显示
+     * Comment
      */
     toggleWhitelistSettings(show) {
         const container = document.getElementById('whitelistContainer');
@@ -1507,7 +1606,7 @@ class WebRequestCaptureApp {    constructor() {
     }
 
     /**
-     * 获取捕获模式的显示文本
+     * Comment
      */
     getCaptureModeText(captureMode) {
         const modeTexts = {
@@ -1520,13 +1619,13 @@ class WebRequestCaptureApp {    constructor() {
     }
 
     /**
-     * 更新UI状态
+     * Comment
      */
     updateUI() {
         this.updateCaptureState();
         this.updateStats();
         
-        // 获取当前数据
+        // Comment
         chrome.runtime.sendMessage({ message: 'get_captured_data' }, async (response) => {
             if (response) {
                 this.currentData = response.requests || [];
@@ -1544,12 +1643,12 @@ class WebRequestCaptureApp {    constructor() {
             }
         });
     }    /**
-     * 重置当前会话
+     * Comment
      */
     async resetSession() {
         const confirmed = await this.showConfirmDialog({
             title: 'Reset Current Session',
-            message: 'This will clear captured requests for the active domain and keep the extension ready for a fresh capture cycle.',
+            message: 'This will stop capture, clear the active domain session, remove the saved URL, and return the extension to a fresh stopped state.',
             confirmLabel: 'Reset Session',
             danger: true
         });
@@ -1562,43 +1661,48 @@ class WebRequestCaptureApp {    constructor() {
                 this.filteredData = [];
                 this.downloadStatus.clear();
                 this.clearPersistedDownloadStatus().catch(() => {});
+                this.isCapturing = false;
                 this.isBatchExporting = false;
+                this.resetVisibleCaptureContext();
+                chrome.storage.local.remove(['lastUrl']);
                 this.updateTable();
                 this.updateStats();
-                this.showSuccess('Session reset');
+                this.updateCaptureState();
+                this.showSuccess('Session reset and capture stopped');
             } else {
                 this.showError('Failed to reset session');
             }
         });
     }
     /**
-     * 显示错误消息
+     * Comment
      */
     showError(message) {
         showError(message);
     }/**
-     * 显示成功消息
+     * Comment
      */
     showSuccess(message) {
         showSuccess(message);
     }
 
     /**
-     * 显示提示消息
+     * Comment
      */
     showToast(message, type = 'info') {
         showToast(message, type);
     }
 
     /**
-     * 打开独立窗口
+     * Comment
      */
     openWindow() {
         debugLog('DevTrace: Opening standalone window...');
-        chrome.runtime.sendMessage({ message: 'open_window' }, (response) => {
+        const currentUrl = document.getElementById('urlInput')?.value?.trim() || '';
+        chrome.runtime.sendMessage({ message: 'open_window', url: currentUrl }, (response) => {
             if (response && response.success) {
                 debugLog('DevTrace: Standalone window opened successfully');
-                // 如果是popup模式且用户手动点击，也关闭popup
+                // Comment
                 if (this.isPopupMode()) {
                     setTimeout(() => {
                         window.close();
@@ -1611,43 +1715,53 @@ class WebRequestCaptureApp {    constructor() {
         });
     }
 
-    /**
-     * 检测是否为popup模式
-     */
-    isPopupMode() {
-        // 检查窗口尺寸，popup通常有固定的小尺寸
-        return window.outerWidth <= 850 && window.outerHeight <= 650;
+    closeWindow() {
+        chrome.runtime.sendMessage({ message: 'close_window' }, (response) => {
+            if (response && response.success) {
+                window.close();
+            } else {
+                this.showError(response?.error || 'Failed to close floating window');
+            }
+        });
     }
 
     /**
-     * 使用Chrome Downloads API保存资源（批量保存专用）
+     * Comment
+     */
+    isPopupMode() {
+        // Comment
+        return !this.isWindowMode() && window.outerWidth <= 850 && window.outerHeight <= 650;
+    }
+
+    /**
+     * Comment
      */
     async saveResourceWithChromeDownloads(resource, batchFolderName, index, fileNumber) {
         try {
             this.setDownloadStatus(resource.url, 'downloading');
-            // 解析URL获取域名和路径
+            // Parse the URL into a domain and path
             const url = new URL(resource.url);
             const domain = url.hostname;
             const pathname = url.pathname;
             
-            // 生成目录路径
+            // Comment
             const pathSegments = pathname.split('/').filter(segment => segment !== '');
-            const directorySegments = pathSegments.slice(0, -1); // 去掉文件名部分
+            const directorySegments = pathSegments.slice(0, -1); // Comment
             
             let directoryPath = domain;
             if (directorySegments.length > 0) {
                 directoryPath += '/' + directorySegments.join('/');
             }
             
-            // 生成文件名
+            // Comment
             const filename = generateFilename(resource, fileNumber);
             
-            // 生成完整的下载路径（使用统一的批量文件夹名）
+            // Comment
             const fullPath = `${batchFolderName}/${directoryPath}/${filename}`;
             
             debugLog('Batch downloading resource to:', fullPath);
             
-            // 使用Chrome Downloads API下载
+            // Comment
             await new Promise((resolve, reject) => {
                 chrome.downloads.download({
                     url: resource.url,
@@ -1665,7 +1779,7 @@ class WebRequestCaptureApp {    constructor() {
                     } else {
                         debugLog('Batch download started:', filename);
                         
-                        // 监听下载完成
+                        // Comment
                         const onDownloadChanged = (downloadDelta) => {
                             if (downloadDelta.id === downloadId && downloadDelta.state) {
                                 if (downloadDelta.state.current === 'complete') {
@@ -1691,7 +1805,7 @@ class WebRequestCaptureApp {    constructor() {
                         
                         chrome.downloads.onChanged.addListener(onDownloadChanged);
                         
-                        // 设置超时
+                        // Comment
                         setTimeout(() => {
                             chrome.downloads.onChanged.removeListener(onDownloadChanged);
                             if (index !== -1) {
@@ -1700,12 +1814,12 @@ class WebRequestCaptureApp {    constructor() {
                                 this.setDownloadStatus(resource.url, 'failed');
                             }
                             reject(new Error('Download timeout'));
-                        }, 30000); // 30秒超时
+                        }, 30000); // Comment
                     }
                 });
             });
             
-            // 显示成功信息（只对前几个文件显示，避免信息过多）
+            // Comment
             if (fileNumber <= 3) {
                 this.showToast(`✅ File ${fileNumber} saved: ${filename}`, 'success');
             }
@@ -1722,9 +1836,13 @@ class WebRequestCaptureApp {    constructor() {
     }
 
     /**
-     * 添加窗口拖拽功能
+     * Comment
      */
     addDragFunctionality() {
+        if (this.isPopupMode()) {
+            return;
+        }
+
         const header = document.querySelector('.header');
         let isDragging = false;
         let startX, startY, startLeft, startTop;
@@ -1733,7 +1851,7 @@ class WebRequestCaptureApp {    constructor() {
         header.style.userSelect = 'none';
 
         header.addEventListener('mousedown', (e) => {
-            // 只在点击标题区域时启用拖拽
+            // Comment
             if (e.target.closest('.url-section') || e.target.closest('.window-controls')) {
                 return;
             }
@@ -1742,7 +1860,7 @@ class WebRequestCaptureApp {    constructor() {
             startX = e.clientX;
             startY = e.clientY;
             
-            // 获取当前窗口位置
+            // Comment
             chrome.windows.getCurrent((window) => {
                 startLeft = window.left;
                 startTop = window.top;
@@ -1768,7 +1886,7 @@ class WebRequestCaptureApp {    constructor() {
         });    }
 
     /**
-     * 切换全选/取消全选
+     * Comment
      */
     toggleSelectAll(checked) {
         const checkboxes = document.querySelectorAll('.resource-checkbox');
@@ -1788,13 +1906,13 @@ class WebRequestCaptureApp {    constructor() {
         this.updateTable();
         this.updateExportResourcesButton();
         
-        // 显示操作提示
+        // Comment
         const selectedCount = this.getSelectedResourcesCount();
         this.showToast(`${checked ? 'Selected' : 'Deselected'} all resources (${selectedCount} items)`, 'info');
     }
 
     /**
-     * 切换单个资源的选择状态
+     * Comment
      */
     toggleResourceSelection(checkbox) {
         const url = decodeURIComponent(checkbox.getAttribute('data-url'));
@@ -1808,13 +1926,13 @@ class WebRequestCaptureApp {    constructor() {
             row.classList.add('row-excluded');
         }
         
-        // 更新全选复选框状态
+        // Comment
         this.updateSelectAllCheckbox();
         this.updateExportResourcesButton();
     }
 
     /**
-     * 更新全选复选框的状态
+     * Comment
      */
     updateSelectAllCheckbox() {
         const selectAllCheckbox = document.getElementById('selectAllCheckbox');
@@ -1834,14 +1952,14 @@ class WebRequestCaptureApp {    constructor() {
     }
 
     /**
-     * 获取选中的资源数量
+     * Comment
      */
     getSelectedResourcesCount() {
         return this.getPendingBatchResources().length;
     }
 
     /**
-     * 获取选中的可下载资源
+     * Comment
      */
     getSelectedDownloadableResources() {
         return this.filteredData.filter(request => 
@@ -1861,11 +1979,14 @@ class WebRequestCaptureApp {    constructor() {
     }
 
     openHelpPage() {
-        chrome.tabs.create({ url: chrome.runtime.getURL('help.html') });
+        const manifest = chrome.runtime.getManifest();
+        const homepage = manifest.homepage_url ? manifest.homepage_url.replace(/\/+$/, '') : '';
+        const url = homepage ? `${homepage}/support.html` : chrome.runtime.getURL('help.html');
+        chrome.tabs.create({ url });
     }
 }
 
-// 当DOM加载完成时初始化应用
+// Comment
 document.addEventListener('DOMContentLoaded', () => {
     new WebRequestCaptureApp();
 });

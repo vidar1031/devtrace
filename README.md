@@ -1,4 +1,4 @@
-# DevTrace v3.0.5
+# DevTrace v0.0.0
 
 DevTrace is a Chrome extension for developers who need to inspect page requests, debug APIs and resource loading, and export selected assets with preserved directory structure.
 
@@ -37,10 +37,12 @@ DevTrace is a Chrome extension for developers who need to inspect page requests,
 
 ## Current Product Status
 
-This repository represents the `v3.0.5` shareable release line.
+This repository represents the `v0.0.0` release line.
 
 - Product usability: good for developer-focused workflows.
 - Architecture: still lightweight and intentionally simple.
+- Repository: [github.com/vidar1031/devtrace](https://github.com/vidar1031/devtrace)
+- Product site: [vidar1031.github.io/devtrace](https://vidar1031.github.io/devtrace/)
 - Project site: [docs/index.html](/Users/zhanghongqin/work/devtrace-v2.4/docs/index.html)
 - Privacy page: [docs/privacy.html](/Users/zhanghongqin/work/devtrace-v2.4/docs/privacy.html)
 - Support page: [docs/support.html](/Users/zhanghongqin/work/devtrace-v2.4/docs/support.html)
@@ -60,5 +62,5 @@ This repository represents the `v3.0.5` shareable release line.
 
 ## Versioning
 
-- Current version: `3.0.5`
+- Current version: `0.0.0`
 - Patch updates increment by `0.0.1`

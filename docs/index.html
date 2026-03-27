@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DevTrace v3.0.5 | Developer Network Inspection Tool</title>
+    <title>DevTrace v0.0.0 | Developer Network Inspection Tool</title>
     <meta name="description" content="DevTrace is a developer network inspection, API debugging, and resource analysis extension with live filtering, local-only processing, and structured export.">
     <style>
         :root {
@@ -12,15 +12,11 @@
             --text: #1f2937;
             --muted: #5f6b7a;
             --accent: #123b63;
-            --accent-2: #2f6ea3;
             --accent-soft: #e1eefc;
-            --success: #0f9d58;
             --border: #d9e2ec;
         }
 
-        * {
-            box-sizing: border-box;
-        }
+        * { box-sizing: border-box; }
 
         body {
             margin: 0;
@@ -31,9 +27,7 @@
                 linear-gradient(180deg, #f8fbff 0%, var(--bg) 100%);
         }
 
-        a {
-            color: inherit;
-        }
+        a { color: inherit; }
 
         .container {
             width: min(1120px, calc(100% - 32px));
@@ -103,7 +97,7 @@
             padding: 11px 16px;
             font-size: 14px;
             font-weight: 700;
-            transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+            transition: transform 0.18s ease, background 0.18s ease;
         }
 
         .nav a {
@@ -141,7 +135,6 @@
         .button.primary {
             background: #ffffff;
             color: var(--accent);
-            box-shadow: 0 10px 24px rgba(11, 31, 48, 0.15);
         }
 
         .button.secondary {
@@ -166,9 +159,7 @@
             font-weight: 600;
         }
 
-        section {
-            padding: 18px 0;
-        }
+        section { padding: 18px 0; }
 
         .grid {
             display: grid;
@@ -195,17 +186,17 @@
             line-height: 1.7;
         }
 
-        .feature-card h3,
-        .panel h3 {
-            margin: 0 0 10px;
-            font-size: 18px;
-        }
-
-        .feature-card p,
+        .panel h3,
         .panel p,
         .panel li {
             color: var(--muted);
             line-height: 1.7;
+        }
+
+        .panel h3 {
+            color: var(--text);
+            margin: 0 0 10px;
+            font-size: 18px;
         }
 
         .feature-icon {
@@ -281,26 +272,12 @@
             font-weight: 600;
         }
 
-        .footer-links a:hover {
-            color: #ffffff;
-        }
-
         code {
             background: #eef2f7;
             border-radius: 6px;
             padding: 2px 6px;
             font-family: "SFMono-Regular", Consolas, monospace;
             font-size: 13px;
-        }
-
-        @media (max-width: 720px) {
-            .hero-panel {
-                padding: 24px 20px;
-            }
-
-            .container {
-                width: min(1120px, calc(100% - 20px));
-            }
         }
     </style>
 </head>
@@ -316,11 +293,11 @@
                             <div style="opacity: 0.78; font-size: 14px;">Developer Network Inspection Tool</div>
                         </div>
                     </div>
-                    <div class="version">v3.0.5</div>
+                    <div class="version">v0.0.0</div>
                     <nav class="nav">
                         <a href="privacy.html">Privacy</a>
                         <a href="support.html">Support</a>
-                        <a href="https://github.com/gamelibs/devtrace-extension">GitHub</a>
+                        <a href="https://github.com/vidar1031/devtrace">GitHub</a>
                     </nav>
                 </div>
 
@@ -332,7 +309,7 @@
                 </p>
 
                 <div class="hero-actions">
-                    <a class="button primary" href="https://github.com/gamelibs/devtrace-extension">Open GitHub Repository</a>
+                    <a class="button primary" href="https://github.com/vidar1031/devtrace">Open GitHub Repository</a>
                     <a class="button secondary" href="support.html">View Help & Support</a>
                 </div>
 
@@ -356,22 +333,22 @@
                     Its single purpose is to help developers inspect network activity, troubleshoot APIs, and analyze resource loading workflows in a controlled, user-initiated session.
                 </p>
                 <div class="grid">
-                    <article class="panel feature-card">
+                    <article class="panel">
                         <div class="feature-icon">01</div>
                         <h3>Focused Network Inspection</h3>
                         <p>Capture requests for a target domain, subdomains, all domains, or an explicit whitelist while keeping the workflow understandable and developer-facing.</p>
                     </article>
-                    <article class="panel feature-card">
+                    <article class="panel">
                         <div class="feature-icon">02</div>
                         <h3>API & Asset Debugging</h3>
                         <p>Inspect live request streams, review status and type, then export selected request URLs or assets when you need to reproduce or troubleshoot issues.</p>
                     </article>
-                    <article class="panel feature-card">
+                    <article class="panel">
                         <div class="feature-icon">03</div>
                         <h3>Privacy-Conscious Design</h3>
                         <p>No built-in analytics, no external upload pipeline, and no background data sharing. Captured session state and download markers remain local.</p>
                     </article>
-                    <article class="panel feature-card">
+                    <article class="panel">
                         <div class="feature-icon">04</div>
                         <h3>Structured Export</h3>
                         <p>Export selected resources into domain/path layout. If direct folder access is restricted, DevTrace falls back to the browser download pipeline.</p>
@@ -438,7 +415,7 @@
                 <div class="grid">
                     <article class="panel">
                         <h3>Installation</h3>
-                        <p>If the Chrome Web Store listing is not yet live for your environment, use manual installation:</p>
+                        <p>If the Chrome Web Store listing is not yet live for your environment, use manual installation from the repository source:</p>
                         <ol>
                             <li>Download the extension source or release package from GitHub.</li>
                             <li>Open <code>chrome://extensions/</code>.</li>
@@ -452,7 +429,8 @@
                         <ul>
                             <li><a href="privacy.html">Read the privacy policy</a></li>
                             <li><a href="support.html">Open support and help page</a></li>
-                            <li><a href="https://github.com/gamelibs/devtrace-extension">View the GitHub repository</a></li>
+                            <li><a href="https://github.com/vidar1031/devtrace">View the GitHub repository</a></li>
+                            <li><a href="https://vidar1031.github.io/devtrace/">Open the product site</a></li>
                             <li><a href="mailto:vidar1031@gmail.com">Contact support</a></li>
                         </ul>
                     </article>
@@ -467,10 +445,11 @@
                 <div class="footer-links">
                     <a href="privacy.html">Privacy Policy</a>
                     <a href="support.html">Support & Donations</a>
-                    <a href="https://github.com/gamelibs/devtrace-extension">GitHub</a>
+                    <a href="https://github.com/vidar1031/devtrace">GitHub</a>
+                    <a href="https://vidar1031.github.io/devtrace/">Product Site</a>
                     <a href="mailto:vidar1031@gmail.com">vidar1031@gmail.com</a>
                 </div>
-                <div>DevTrace v3.0.5. Developer network inspection, API debugging, and resource analysis.</div>
+                <div>DevTrace v0.0.0. Developer network inspection, API debugging, and resource analysis.</div>
             </div>
         </div>
     </footer>

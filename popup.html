@@ -25,21 +25,77 @@
             min-height: 400px;
         }
 
+        body.window-mode {
+            min-width: 920px;
+            min-height: 620px;
+            border: none;
+            border-radius: 0;
+            box-shadow: none;
+        }
+
         /* Header Section */        .header {
             background: #2c3e50;
             color: white;
-            padding: 12px 15px;
+            padding: 10px 15px 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            flex-shrink: 0;
+        }
+
+        .header-top-row {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            flex-shrink: 0;
+            flex-wrap: wrap;
+            gap: 12px;
+            min-width: 0;
+        }
+
+        .header-brand {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 12px;
+            font-weight: 700;
+            color: #ffffff;
+            letter-spacing: 0.2px;
+        }
+
+        .brand-help-link {
+            color: #9fd2ff;
+            text-decoration: none;
+            font-size: 12px;
+            font-weight: 600;
+            padding-left: 10px;
+            border-left: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .brand-help-link:hover {
+            color: #d8ecff;
+            text-decoration: underline;
+        }
+
+        .header-hint-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            flex: 1;
+            min-width: 300px;
+            margin-left: auto;
+            padding: 7px 10px;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.12);
         }
 
         .url-section {
             display: flex;
             align-items: center;
-            flex: 1;
+            width: 100%;
             gap: 10px;
+            min-width: 0;
         }
 
         #urlInput {
@@ -75,8 +131,14 @@
         .btn-success { background: #27ae60; color: white; }
         .btn-success:hover { background: #229954; }
 
-        .btn-secondary { background: #95a5a6; color: white; }
-        .btn-secondary:hover { background: #7f8c8d; }
+        .btn-secondary { background: #5f7f96; color: white; }
+        .btn-secondary:hover { background: #4e6c82; }
+
+        .btn-neutral-soft { background: #7a8d99; color: white; }
+        .btn-neutral-soft:hover { background: #657986; }
+
+        .btn-warning-soft { background: #d4a017; color: white; }
+        .btn-warning-soft:hover { background: #b8870f; }
 
         /* Window icon for open window button */
         .window-icon {
@@ -112,14 +174,32 @@
         }
 
         .window-title {
-            color: rgba(255,255,255,0.9);
+            color: #ffd166;
             font-size: 14px;
-            font-weight: 500;
-            margin-right: auto;
+            font-weight: 700;
             display: flex;
             align-items: center;
             gap: 8px;
-            cursor: pointer;
+            line-height: 1.4;
+            max-width: 480px;
+        }
+
+        body.window-mode .header {
+            padding: 14px 16px;
+            gap: 12px;
+        }
+
+        body.window-mode .header-hint-row {
+            flex: 0 0 auto;
+            min-width: auto;
+            margin-left: auto;
+            padding: 0;
+            background: transparent;
+            border: none;
+        }
+
+        body.window-mode .window-title {
+            display: none;
         }
 
         .version-badge {
@@ -193,12 +273,47 @@
             display: flex;
             align-items: center;
             gap: 5px;
+            flex-shrink: 0;
         }
 
         .window-controls .btn {
-            padding: 6px 8px;
-            font-size: 12px;
+            width: 36px;
+            height: 36px;
+            padding: 0;
             min-width: auto;
+            border-radius: 10px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(180deg, #295f9e 0%, #1f4f88 100%);
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.2), 0 4px 10px rgba(15, 23, 42, 0.18);
+        }
+
+        .window-controls .btn:hover {
+            background: linear-gradient(180deg, #3372bb 0%, #275d9e 100%);
+            transform: translateY(-1px);
+        }
+
+        body.window-mode .window-controls .btn {
+            background: linear-gradient(180deg, #1f4f88 0%, #183f6d 100%);
+        }
+
+        body.window-mode .window-controls .btn:hover {
+            background: linear-gradient(180deg, #275d9e 0%, #1f4f88 100%);
+        }
+
+        body.window-mode #urlInput {
+            min-width: 320px;
+        }
+
+        .close-window-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            font-size: 18px;
+            line-height: 1;
+            font-weight: 700;
         }
 
         /* Status Bar */        .status-bar {
@@ -490,18 +605,58 @@
         }/* Footer */
         .footer {
             background: white;
-            padding: 10px 15px;
+            padding: 10px 15px 8px;
             border-top: 1px solid #ddd;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            flex-shrink: 0;
+            min-height: 76px;
+        }        .footer-main-row {
+            width: 100%;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            flex-shrink: 0;
-            min-height: 50px;
-        }        .stats {
+            gap: 12px;
+        }
+
+        .stats {
             font-size: 12px;
             color: #666;
             flex: 1;
-        }        .export-buttons {
+        }
+
+        .footer-meta-row {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding-top: 6px;
+            border-top: 1px solid #edf2f7;
+            font-size: 12px;
+            color: #64748b;
+        }
+
+        .footer-meta-row a {
+            color: #2f6ea3;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .footer-meta-row a:hover {
+            text-decoration: underline;
+        }
+
+        .footer-version {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: #5f6b7a;
+            font-weight: 600;
+        }
+
+        .export-buttons {
             display: flex;
             gap: 6px;
             flex-shrink: 0;
@@ -560,7 +715,7 @@
             gap: 5px;
         }
 
-        /* 域名标签样式 */
+        /* Domain tag styles */
         .domains-tags-container {
             display: flex;
             flex-wrap: wrap;
@@ -650,18 +805,26 @@
 </head>
 <body>    <!-- Header Section -->
     <div class="header">
+        <div class="header-top-row">
+            <div class="header-brand">
+                <span>Web Request Capture Pro</span>
+                <a id="helpPageTrigger" class="brand-help-link" href="#">Help</a>
+            </div>
+            <div class="header-hint-row">
+                <div class="window-title" aria-label="Usage hint">Tip: click to pop out a floating window for easler monitoring.</div>
+                <div class="window-controls">
+                    <button id="openWindowButton" class="btn btn-secondary" title="Open in separate window">
+                        <span class="window-icon"></span>
+                    </button>
+                </div>
+            </div>
+        </div>
         <div class="url-section">
             <input type="text" id="urlInput" placeholder="Enter URL (e.g., example.com or https://example.com)..." />
             <div class="control-buttons">
-                <button id="startButton" class="btn btn-primary">Start</button>
+                <button id="startButton" class="btn btn-success">Start</button>
                 <button id="stopButton" class="btn btn-danger" disabled>Stop</button>
             </div>
-        </div>
-        <div id="helpPageTrigger" class="window-title" title="Open help page in a new tab" role="button" tabindex="0" aria-label="Open help page in a new tab">Web Request Capture Pro <span id="versionBadge" class="version-badge">v3.0.5</span></div>
-        <div class="window-controls">
-            <button id="openWindowButton" class="btn btn-secondary" title="Open in separate window">
-                <span class="window-icon"></span>
-            </button>
         </div>
     </div>
 
@@ -710,7 +873,8 @@
                 <option value="other">Other</option>
             </select>
         </div>
-        <button id="clearFilters" class="btn btn-secondary">Reset Filters</button>
+        <button id="clearFilters" class="btn btn-neutral-soft">Reset Filters</button>
+        <button id="resetSessionButton" class="btn btn-warning-soft">Reset Session</button>
         <div class="settings-toggle">
             <button id="settingsButton" class="btn btn-secondary">Settings</button>
         </div>
@@ -744,15 +908,21 @@
     </div>
 
     <!-- Footer -->
-    <div class="footer">        <div class="stats">
-            <span>Total: <strong id="totalRequests">0</strong></span>
-            <span style="margin-left: 15px;">Filtered: <strong id="filteredCount">0</strong></span>
-            <span style="margin-left: 15px;">Memory: <strong id="memoryUsage">0 KB</strong></span>
-        </div><div class="export-buttons">
-            <button id="clearButton" class="btn btn-danger">Clear All Data</button>
-            <button id="resetSessionButton" class="btn btn-secondary">Reset Session</button>
-            <button id="exportButton" class="btn btn-success">Export JSON</button>
-            <button id="exportResourcesButton" class="btn btn-primary">Export Resources</button>
+    <div class="footer">
+        <div class="footer-main-row">
+            <div class="stats">
+                <span>Total: <strong id="totalRequests">0</strong></span>
+                <span style="margin-left: 15px;">Filtered: <strong id="footerFilteredCount">0</strong></span>
+                <span style="margin-left: 15px;">Memory: <strong id="memoryUsage">0 KB</strong></span>
+            </div>
+            <div class="export-buttons">
+                <button id="clearButton" class="btn btn-danger">Clear All Data</button>
+                <button id="exportButton" class="btn btn-primary">Export JSON</button>
+                <button id="exportResourcesButton" class="btn btn-primary">Export Resources</button>
+            </div>
+        </div>
+        <div class="footer-meta-row">
+            <div class="footer-version">Version <span id="versionBadge" class="version-badge" style="color:#475569; background:#edf2f7; border-color:#d7dee8;">v0.0.0</span></div>
         </div>
     </div>
 
@@ -811,7 +981,7 @@
                 <button id="addBlockedDomainBtn" class="btn btn-secondary" style="margin-left: 5px; padding: 4px 8px; font-size: 11px;">Add</button>
             </div>
             <div id="blockedDomainsContainer" class="domains-tags-container" style="width: 100%; min-height: 40px; max-height: 120px; overflow-y: auto; border: 1px solid #ddd; border-radius: 3px; padding: 8px; background: #f9f9f9;">
-                <!-- 黑名单域名标签将在这里动态生成 -->
+                <!-- Blocked-domain tags are rendered here dynamically -->
             </div>
         </div>
         <div style="margin-top: 15px; text-align: right;">
