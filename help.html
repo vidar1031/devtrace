@@ -243,7 +243,7 @@
                     <h1>DevTrace Help Center</h1>
                     <p>Usage guidance for a developer-focused network inspection tool. This page explains capture flow, API and asset debugging behavior, export rules, session reset logic, and what to expect in popup or detached window mode.</p>
                 </div>
-                <div class="version-badge" data-app-version>v0.0.0</div>
+                <div class="version-badge" data-app-version>v1.0.0</div>
             </div>
             <div class="tips">
                 <div class="tip">Inspect live requests</div>
@@ -277,8 +277,11 @@
             <article class="card">
                 <h2>Export Behavior</h2>
                 <ul>
+                    <li><strong>Stop</strong> ends active capture and leaves the current results visible for review.</li>
+                    <li><strong>Reset Filters</strong> restores the domain, status, and type selectors to their default values.</li>
                     <li><strong>Export JSON</strong> saves the selected downloadable resource URLs as a JSON array.</li>
                     <li><strong>Export Resources</strong> opens a folder picker first, then writes files into a domain/path structure.</li>
+                    <li><strong>Settings</strong> opens capture mode, allowlist, and blocklist configuration.</li>
                     <li>Already completed downloads stay marked as downloaded and are skipped on later export runs.</li>
                     <li>If direct folder writing is blocked, DevTrace falls back to the browser download pipeline.</li>
                 </ul>

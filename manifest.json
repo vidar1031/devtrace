@@ -2,7 +2,7 @@
     "manifest_version": 3,
     "name": "DevTrace - Network Request Inspector",
     "short_name": "DevTrace",
-    "version": "0.0.0",
+    "version": "1.0.0",
     "description": "Developer network inspection and API/resource debugging extension with live filtering, session restore, and structured export.",
     "permissions": [
       "tabs",

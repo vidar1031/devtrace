@@ -1,4 +1,4 @@
-// DevTrace background service worker v0.0.0
+// DevTrace background service worker v1.0.0
 const DEVTRACE_DEBUG = false;
 const debugLog = (...args) => {
     if (DEVTRACE_DEBUG) {

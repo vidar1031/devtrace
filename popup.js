@@ -1,4 +1,4 @@
-// DevTrace popup application v0.0.0
+// DevTrace popup application v1.0.0
 const DEVTRACE_DEBUG = false;
 const debugLog = (...args) => {
     if (DEVTRACE_DEBUG) {
